@@ -41,8 +41,8 @@ namespace Unreal_Dumping_Agent.UI
                 throw new Exception("Call setup first.!!");
 
             // Set On Center
-            Vector2 pos = new Vector2(Screen.AllScreens[0].Bounds.Width / 2 - _window.X,
-                Screen.AllScreens[0].Bounds.Height / 2 - _window.Y);
+            Vector2 pos = new Vector2(Screen.AllScreens[0].Bounds.Width / 2 - _window.Width / 2,
+                Screen.AllScreens[0].Bounds.Height / 2 - _window.Height / 2);
 
             SetPos(pos);
         }
