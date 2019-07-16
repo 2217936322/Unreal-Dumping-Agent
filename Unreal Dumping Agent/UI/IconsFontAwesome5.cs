@@ -1,34 +1,11 @@
 ﻿using System;
 using System.Drawing;
-using System.Drawing.Text;
 using System.IO;
-using Unreal_Dumping_Agent.Utils;
 
 namespace Unreal_Dumping_Agent.UI
 {
     public class FontAwesome5
     {
-        public static Font FontAwesome { get; private set; }
-        public static bool LoadFont()
-        {
-            var collection = new PrivateFontCollection();
-            try
-            {
-                collection.AddFontFile(UtilsHelper.Is64Bit()
-                    ? @"..\..\..\Unreal Dumping Agent\Config\Fonts\fa-solid-900.ttf"
-                    : @"Config\Fonts\fa-solid-900.ttf");
-            }
-            catch (FileNotFoundException)
-            {
-                return false;
-            }
-
-            var fontFamily = new FontFamily("Font Awesome 5 Free Solid", collection);
-            FontAwesome = new Font(fontFamily, 10);
-
-            return true;
-        }
-
         // public const string FontIconFileName = "fa-regular-400.ttf";
         public const string FontIconFileName = "fa-solid-900.ttf";
 
