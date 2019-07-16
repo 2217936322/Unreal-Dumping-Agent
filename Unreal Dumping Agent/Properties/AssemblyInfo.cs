@@ -6,11 +6,11 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("Unreal Dumping Agent")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("Useful tool to help you fetch and dump Unreal Engine Games.")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("CorrM")]
 [assembly: AssemblyProduct("Unreal Dumping Agent")]
-[assembly: AssemblyCopyright("Copyright ©  2019")]
+[assembly: AssemblyCopyright("Copyright © CorrM 2019")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
