@@ -9,6 +9,8 @@ using Unreal_Dumping_Agent.UtilsHelper;
 using Veldrid;
 using Veldrid.Sdl2;
 using Veldrid.StartupUtilities;
+using ClrPlus.Windows.Api;
+using ClrPlus.Windows.Api.Enumerations;
 
 namespace Unreal_Dumping_Agent.UI
 {
@@ -76,6 +78,13 @@ namespace Unreal_Dumping_Agent.UI
                 throw new Exception("Call setup first.!!");
 
             return ImGui.GetStyle();
+        }
+        public void SetIcon(System.Drawing.Icon windowIcon)
+        {
+            var smallIcon = windowIcon.ToBitmap().GetHicon();
+            var largeIcon = windowIcon.ToBitmap().GetHicon();
+            User32.SendMessage(GetWindowHandle(), (int)Win32Msgs.WM_SETICON, 0, smallIcon);
+            User32.SendMessage(GetWindowHandle(), (int)Win32Msgs.WM_SETICON, 1, largeIcon);
         }
         public void FlashWindow()
         {
@@ -147,6 +156,9 @@ namespace Unreal_Dumping_Agent.UI
             _controller.Dispose();
             _cl.Dispose();
             _gd.Dispose();
+
+            if (_init)
+                _window.Close();
         }
     }
 }

@@ -12,6 +12,10 @@ namespace Unreal_Dumping_Agent.UtilsHelper
     /// </summary>
     public static class Win32
     {
+        #region Structs Enums
+
+        #endregion
+
         [DllImport("user32.dll")]
         public static extern bool FlashWindow(IntPtr hwnd, bool bInvert);
 

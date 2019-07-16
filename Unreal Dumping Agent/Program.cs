@@ -11,11 +11,13 @@ using Veldrid;
 namespace Unreal_Dumping_Agent
 {
     /*
-     * NOTE:
+     * NOTEs:
      * 1- To build must change this VS option. Options->NuGet Package Manager->PackageReference,
      * Check Allow format selection.
      * 2- For Debugging Go Debug->Windows->ExceptionSettings->Check all items xD.
+     * 3- To add new icon make sure it's `Embedded Resource` and `Copy if newer`
      */
+
     public class Program
     {
         private static void Main(string[] args) => new Program().MainAsync().GetAwaiter().GetResult();
@@ -25,6 +27,7 @@ namespace Unreal_Dumping_Agent
             Utils.MainWindow = new UiWindow();
             Utils.MainWindow.Setup("Unreal Dumper Agent", new Vector2(450, 450), new Vector2(0, 0), SubmitUi);
             Utils.MainWindow.SetOnCenter();
+            Utils.MainWindow.SetIcon(Properties.Resources.win);
             Utils.MainWindow.Show();
 
             while (!Utils.MainWindow.Closed())

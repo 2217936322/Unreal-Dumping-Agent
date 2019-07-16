@@ -59,5 +59,15 @@ namespace Unreal_Dumping_Agent.Properties {
                 resourceCulture = value;
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
+        /// </summary>
+        internal static System.Drawing.Icon win {
+            get {
+                object obj = ResourceManager.GetObject("win", resourceCulture);
+                return ((System.Drawing.Icon)(obj));
+            }
+        }
     }
 }
