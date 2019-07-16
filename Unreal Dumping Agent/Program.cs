@@ -30,6 +30,8 @@ namespace Unreal_Dumping_Agent
             Utils.MainWindow.SetIcon(Properties.Resources.win);
             Utils.MainWindow.Show();
 
+
+
             // Wait until window closed
             while (!Utils.MainWindow.Closed())
                 Thread.Sleep(1);
