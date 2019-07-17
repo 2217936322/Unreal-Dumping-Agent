@@ -2,12 +2,10 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Net.Mime;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using Unreal_Dumping_Agent.UtilsHelper;
 using ClrPlus.Windows.Api;
-using ClrPlus.Windows.Api.Enumerations;
 using ClrPlus.Windows.Api.Structures;
 
 namespace Unreal_Dumping_Agent.Memory
@@ -94,6 +92,25 @@ namespace Unreal_Dumping_Agent.Memory
             Win32.ReadProcessMemory(_targetProcess.Handle, lpBaseAddress, buffer, len, out _);
 
             return buffer;
+        }
+        public string ReadString(IntPtr lpBaseAddress, bool isUnicode = false)
+        {
+            int charSize = isUnicode ? 2 : 1;
+            string ret = string.Empty;
+
+            while (true)
+            {
+                var buf = ReadBytes(lpBaseAddress, charSize);
+
+                // Null-Terminator
+                if (buf.All(b => b == 0))
+                    break;
+
+                ret += System.Text.Encoding.UTF8.GetString(buf);
+                lpBaseAddress += charSize;
+            }
+
+            return ret;
         }
         public T Rpm<T>(IntPtr lpBaseAddress) where T : struct
         {
