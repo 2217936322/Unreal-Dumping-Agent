@@ -16,9 +16,9 @@ namespace Unreal_Dumping_Agent.Memory
      */
     public class Memory
     {
-        private readonly Process _targetProcess;
-        private readonly SafeProcessHandle _processHandle;
-        private readonly bool _is64Bit;
+        public Process TargetProcess { get; }
+        public SafeProcessHandle ProcessHandle { get; }
+        public bool Is64Bit { get; }
 
         public Memory(Process targetProcess)
         {
@@ -26,23 +26,23 @@ namespace Unreal_Dumping_Agent.Memory
                 return;
 
             // Open Process
-            _processHandle = Kernel32.OpenProcess(0x000F0000 | 0x00100000 | 0xFFFF, false, targetProcess.Id);
-            _is64Bit = targetProcess.Is64Bit();
-            _targetProcess = targetProcess;
+            ProcessHandle = Kernel32.OpenProcess(0x000F0000 | 0x00100000 | 0xFFFF, false, targetProcess.Id);
+            Is64Bit = targetProcess.Is64Bit();
+            TargetProcess = targetProcess;
         }
-        public Memory(int processId) : this(Process.GetProcessById(processId)) { }
+        public Memory(int processId): this(Process.GetProcessById(processId)) { }
 
         #region Process Control
         public List<ProcessModule> GetModuleList()
         {
-            return _targetProcess.Modules.Cast<ProcessModule>().ToList();
+            return TargetProcess.Modules.Cast<ProcessModule>().ToList();
         }
         public bool GetModuleInfo(string moduleName, out ProcessModule pModule)
         {
             pModule = null;
             try
             {
-                pModule = _targetProcess.Modules.Cast<ProcessModule>().First(m => m.ModuleName == moduleName);
+                pModule = TargetProcess.Modules.Cast<ProcessModule>().First(m => m.ModuleName == moduleName);
                 return true;
             }
             catch
@@ -76,15 +76,15 @@ namespace Unreal_Dumping_Agent.Memory
         }
         public bool SuspendProcess()
         {
-            return Win32.NtSuspendProcess(_targetProcess.Handle) >= 0;
+            return Win32.NtSuspendProcess(TargetProcess.Handle) >= 0;
         }
         public bool ResumeProcess()
         {
-            return Win32.NtResumeProcess(_targetProcess.Handle) >= 0;
+            return Win32.NtResumeProcess(TargetProcess.Handle) >= 0;
         }
         public bool TerminateProcess()
         {
-            return Win32.NtTerminateProcess(_targetProcess.Handle, 0) >= 0;
+            return Win32.NtTerminateProcess(TargetProcess.Handle, 0) >= 0;
         }
         #endregion
 
@@ -94,13 +94,13 @@ namespace Unreal_Dumping_Agent.Memory
         /// </summary>
         public IntPtr ReadAddress(IntPtr lpBaseAddress)
         {
-            return new IntPtr(_is64Bit ? Rpm<long>(lpBaseAddress) : Rpm<int>(lpBaseAddress));
+            return new IntPtr(Is64Bit ? Rpm<long>(lpBaseAddress) : Rpm<int>(lpBaseAddress));
         }
 
-        public byte[] ReadBytes(IntPtr lpBaseAddress, int len)
+        public byte[] ReadBytes(IntPtr lpBaseAddress, long len)
         {
             var buffer = new byte[len];
-            Win32.ReadProcessMemory(_targetProcess.Handle, lpBaseAddress, buffer, len, out _);
+            Win32.ReadProcessMemory(TargetProcess.Handle, lpBaseAddress, buffer, len, out _);
 
             return buffer;
         }
@@ -123,7 +123,7 @@ namespace Unreal_Dumping_Agent.Memory
 
             return ret;
         }
-        public byte[] ReadPBytes(IntPtr lpBaseAddress, int len)
+        public byte[] ReadPBytes(IntPtr lpBaseAddress, long len)
         {
             return ReadBytes(ReadAddress(lpBaseAddress), len);
         }
@@ -135,7 +135,7 @@ namespace Unreal_Dumping_Agent.Memory
         public T Rpm<T>(IntPtr lpBaseAddress) where T : struct
         {
             var buffer = new T();
-            Win32.ReadProcessMemory(_targetProcess.Handle, lpBaseAddress, buffer, Marshal.SizeOf(buffer), out _);
+            Win32.ReadProcessMemory(TargetProcess.Handle, lpBaseAddress, buffer, Marshal.SizeOf(buffer), out _);
 
             return buffer;
         }
@@ -145,7 +145,7 @@ namespace Unreal_Dumping_Agent.Memory
         }
         public bool Wpm<T>(IntPtr lpBaseAddress, T value) where T : struct
         {
-            return Win32.WriteProcessMemory(_targetProcess.Handle, lpBaseAddress, value, Marshal.SizeOf(value), out _);
+            return Win32.WriteProcessMemory(TargetProcess.Handle, lpBaseAddress, value, Marshal.SizeOf(value), out _);
         }
         public bool WpmPointer<T>(IntPtr lpBaseAddress, T value) where T : struct
         {
