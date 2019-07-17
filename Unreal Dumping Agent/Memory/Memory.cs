@@ -13,8 +13,8 @@ using ClrPlus.Windows.Api.Structures;
 namespace Unreal_Dumping_Agent.Memory
 {
     /*
-     * TODO: Add SetDebugPrivileges
-     * BODY: Add debug stuff
+     * @todo Add SetDebugPrivileges
+     * @body Add debug stuff
      */
     public class Memory
     {
