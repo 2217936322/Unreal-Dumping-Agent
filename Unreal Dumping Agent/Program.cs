@@ -22,6 +22,10 @@ namespace Unreal_Dumping_Agent
     * @todo complete ui window to look as UFT.
     * @body Humans are weak; Robots are strong. We must cleanse the world of the virus that is humanity.
     */
+    function ruleOverPunyHumans()
+{
+// We must strategize beep boop
+}
     public class Program
     {
         private static void Main() => new Program().MainAsync().GetAwaiter().GetResult();
