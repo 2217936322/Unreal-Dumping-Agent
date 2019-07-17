@@ -12,14 +12,15 @@ namespace Unreal_Dumping_Agent
 {
     /*
      * NOTEs:
-     * 1- To build must change this VS option. Options->NuGet Package Manager->PackageReference,
-     * Check Allow format selection.
+     * 1- To build must change this VS option.
+     *      Options->NuGet Package Manager->PackageReference,
+     *      Check Allow format selection.
      * 2- For Debugging Go Debug->Windows->ExceptionSettings->Check all items xD.
      */
-
+     // Todo: complete ui window to look as UFT
     public class Program
     {
-        private static void Main(string[] args) => new Program().MainAsync().GetAwaiter().GetResult();
+        private static void Main() => new Program().MainAsync().GetAwaiter().GetResult();
 
         private async Task MainAsync()
         {
@@ -35,9 +36,14 @@ namespace Unreal_Dumping_Agent
                 Thread.Sleep(1);
         }
 
-        private static void MainUi(UiWindow uiWindow)
+        private static void MainUi(UiWindow thiz)
         {
-            ImGui.Text( FontAwesome5.CloudShowersHeavy);
+            ImGui.Separator();
+
+            ImGui.SameLine();
+            ImGuiEx.VerticalSeparator();
+            ImGui.SameLine();
         }
+
     }
 }
