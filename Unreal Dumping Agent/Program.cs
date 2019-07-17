@@ -25,7 +25,7 @@ namespace Unreal_Dumping_Agent
         {
             // Init Window
             Utils.MainWindow = new UiWindow();
-            Utils.MainWindow.Setup($"Unreal Dumper Agent, Version: {Utils.Version} - {Utils.Title}", new Vector2(450, 450), new Vector2(0, 0), MainUi);
+            Utils.MainWindow.Setup($"Unreal Dumper Agent, Version: {Utils.Version} - {Utils.Title}", new Vector2(1050, 530), new Vector2(0, 0), MainUi);
             Utils.MainWindow.SetOnCenter();
             Utils.MainWindow.SetIcon(Properties.Resources.win);
             Utils.MainWindow.Show();
@@ -37,7 +37,7 @@ namespace Unreal_Dumping_Agent
 
         private static void MainUi(UiWindow uiWindow)
         {
-            ImGui.Text("HI");
+            ImGui.Text( FontAwesome5.CloudShowersHeavy);
         }
     }
 }

@@ -22,5 +22,13 @@ namespace Unreal_Dumping_Agent.UtilsHelper
             return true;
 #endif
         }
+        public static bool IsDebug()
+        {
+#if DEBUG
+            return true;
+#else
+            return true;
+#endif
+        }
     }
 }

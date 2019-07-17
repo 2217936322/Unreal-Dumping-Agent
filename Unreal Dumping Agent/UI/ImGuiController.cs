@@ -1,13 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Numerics;
 using System.Reflection;
-using System.IO;
-using Veldrid;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Windows.Forms;
 using ImGuiNET;
+using Unreal_Dumping_Agent.UtilsHelper;
+using Veldrid;
 
-namespace Unreal_Dumping_Agent.UI.ImGuiContainer
+namespace Unreal_Dumping_Agent.UI
 {
     /// <summary>
     /// A modified version of Veldrid.ImGui's ImGuiRenderer.
@@ -54,7 +57,7 @@ namespace Unreal_Dumping_Agent.UI.ImGuiContainer
         /// <summary>
         /// Constructs a new ImGuiController.
         /// </summary>
-        public ImGuiController(GraphicsDevice gd, OutputDescription outputDescription, int width, int height)
+        public unsafe ImGuiController(GraphicsDevice gd, OutputDescription outputDescription, int width, int height)
         {
             _gd = gd;
             _windowWidth = width;
@@ -64,6 +67,36 @@ namespace Unreal_Dumping_Agent.UI.ImGuiContainer
             ImGui.SetCurrentContext(context);
 
             ImGui.GetIO().Fonts.AddFontDefault();
+
+            // Setup Font Awesome
+            var iconsConfig = new ImFontConfigPtr(ImGuiNative.ImFontConfig_ImFontConfig())
+            {
+                MergeMode = true,
+                PixelSnapH = true
+            };
+
+            string fontPath = Utils.IsDebug()
+                ? @"..\..\..\Unreal Dumping Agent\Config\Fonts\fa-solid-900.ttf"
+                : @"Config\Fonts\fa-solid-900.ttf";
+
+            GCHandle rangeHandle = GCHandle.Alloc(new ushort[] { FontAwesome5.IconMin, FontAwesome5.IconMax, 0 }, GCHandleType.Pinned);
+
+            var fontAwesome = ImGui.GetIO().Fonts.AddFontFromFileTTF(fontPath, 11.0f, iconsConfig, rangeHandle.AddrOfPinnedObject());
+            try
+            {
+                fontAwesome.IsLoaded();
+            }
+            catch (Exception)
+            {
+                throw new Exception($"Can't load font file '{FontAwesome5.FontIconFileName}'");
+            }
+            finally
+            {
+                if (rangeHandle.IsAllocated)
+                    rangeHandle.Free();
+            }
+
+            iconsConfig.Destroy();
 
             CreateDeviceResources(gd, outputDescription);
             SetKeyMappings();
