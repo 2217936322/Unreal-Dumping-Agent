@@ -17,7 +17,7 @@ namespace Unreal_Dumping_Agent
      *      Check Allow format selection.
      * 2- For Debugging Go Debug->Windows->ExceptionSettings->Check all items xD.
      */
-     // Todo: complete ui window to look as UFT
+     // Todo: complete ui window to look as UFT.
     public class Program
     {
         private static void Main() => new Program().MainAsync().GetAwaiter().GetResult();
