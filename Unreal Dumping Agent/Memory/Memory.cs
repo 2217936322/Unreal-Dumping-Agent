@@ -12,7 +12,7 @@ namespace Unreal_Dumping_Agent.Memory
 {
     /*
      * @todo Add SetDebugPrivileges
-     * @body Add debug stuff
+     * @body Add debug stuff.
      */
     public class Memory
     {
@@ -32,6 +32,7 @@ namespace Unreal_Dumping_Agent.Memory
         }
         public Memory(int processId) : this(Process.GetProcessById(processId)) { }
 
+        #region Process Control
         public List<ProcessModule> GetModuleList()
         {
             return _targetProcess.Modules.Cast<ProcessModule>().ToList();
@@ -85,6 +86,7 @@ namespace Unreal_Dumping_Agent.Memory
         {
             return Win32.NtTerminateProcess(_targetProcess.Handle, 0) >= 0;
         }
+        #endregion
 
         #region ReadWriteMemory
         /// <summary>
