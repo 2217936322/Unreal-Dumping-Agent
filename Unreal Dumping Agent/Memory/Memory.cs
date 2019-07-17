@@ -86,6 +86,15 @@ namespace Unreal_Dumping_Agent.Memory
             return Win32.NtTerminateProcess(_targetProcess.Handle, 0) >= 0;
         }
 
+        #region ReadWriteMemory
+        /// <summary>
+        /// Read address based on Target Game (32 or 64)bit
+        /// </summary>
+        public IntPtr ReadAddress(IntPtr lpBaseAddress)
+        {
+            return new IntPtr(_is64Bit ? Rpm<long>(lpBaseAddress) : Rpm<int>(lpBaseAddress));
+        }
+
         public byte[] ReadBytes(IntPtr lpBaseAddress, int len)
         {
             var buffer = new byte[len];
@@ -112,6 +121,15 @@ namespace Unreal_Dumping_Agent.Memory
 
             return ret;
         }
+        public byte[] ReadPBytes(IntPtr lpBaseAddress, int len)
+        {
+            return ReadBytes(ReadAddress(lpBaseAddress), len);
+        }
+        public string ReadPString(IntPtr lpBaseAddress, bool isUnicode = false)
+        {
+            return ReadString(ReadAddress(lpBaseAddress), isUnicode);
+        }
+
         public T Rpm<T>(IntPtr lpBaseAddress) where T : struct
         {
             var buffer = new T();
@@ -131,12 +149,7 @@ namespace Unreal_Dumping_Agent.Memory
         {
             return Wpm(ReadAddress(lpBaseAddress), value);
         }
-        /// <summary>
-        /// Read address based on Target Game (32 or 64)bit
-        /// </summary>
-        public IntPtr ReadAddress(IntPtr lpBaseAddress)
-        {
-            return new IntPtr(_is64Bit ? Rpm<long>(lpBaseAddress) : Rpm<int>(lpBaseAddress));
-        }
+        
+        #endregion
     }
 }
