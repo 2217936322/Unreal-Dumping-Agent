@@ -15,8 +15,19 @@ namespace Unreal_Dumping_Agent.UtilsHelper
         public const string Version = "1.0.0";
         public const string Title = "Unreal Suspender";
 
-        public static UiWindow MainWindow;
+        #region Structs
+        public struct MemoryRegion
+        {
+            public IntPtr Address;
+            public long RegionSize;
+        }
+        #endregion
 
+        #region Variables
+        public static UiWindow MainWindow;
+        #endregion
+
+        #region Tool
         public static bool ProgramIs64()
         {
 #if x64
@@ -33,6 +44,7 @@ namespace Unreal_Dumping_Agent.UtilsHelper
             return true;
 #endif
         }
+        #endregion
 
         #region Process
         public static bool Is64Bit(this Process process)
