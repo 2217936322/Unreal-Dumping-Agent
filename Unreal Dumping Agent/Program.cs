@@ -18,6 +18,14 @@ namespace Unreal_Dumping_Agent
      * 2- For Debugging Go Debug->Windows->ExceptionSettings->Check all items xD.
      */
     // @todo complete ui window to look as UFT.
+    /**
+ * @todo Take over the world
+ * @body Humans are weak; Robots are strong. We must cleanse the world of the virus that is humanity.
+ */
+    function ruleOverPunyHumans()
+{
+// We must strategize beep boop
+}
     public class Program
     {
         private static void Main() => new Program().MainAsync().GetAwaiter().GetResult();
