@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ClrPlus.Windows.Api;
+using ClrPlus.Windows.Api.Structures;
 using Unreal_Dumping_Agent.UI;
 
 namespace Unreal_Dumping_Agent.UtilsHelper
@@ -14,7 +17,7 @@ namespace Unreal_Dumping_Agent.UtilsHelper
 
         public static UiWindow MainWindow;
 
-        public static bool Is64Bit()
+        public static bool ProgramIs64()
         {
 #if x64
             return true;
@@ -30,5 +33,16 @@ namespace Unreal_Dumping_Agent.UtilsHelper
             return true;
 #endif
         }
+
+        #region Process
+        public static bool Is64Bit(this Process process)
+        {
+            // PROCESS_QUERY_INFORMATION 
+            var processHandle = Kernel32.OpenProcess(0x0400, false, process.Id);
+            bool ret = Kernel32.IsWow64Process(processHandle, out bool retVal) && retVal;
+            processHandle.Close();
+            return !ret;
+        }
+        #endregion
     }
 }

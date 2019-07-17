@@ -82,9 +82,11 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Memory\Memory.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UI\IconsFontAwesome5.cs" />
+    <Compile Include="UI\ImControl.cs" />
     <Compile Include="UI\ImGuiController.cs" />
     <Compile Include="UI\ImGuiExtensions.cs" />
     <Compile Include="UI\UiWindow.cs" />
