@@ -12,6 +12,12 @@ using Veldrid;
 using static Unreal_Dumping_Agent.UI.ImControl;
 namespace Unreal_Dumping_Agent
 {
+    /**
+     * @todo New ui idea
+     * @body Create a ui looks like chat (like fb bot) bot talk to u and can show buttons, list of information, other stuff.
+     * use ML.Net for and make the bot response to normal user text like `i need to find GObjects` and set small menu for task list `finder, sdk gen, instance, ..etc`
+     */
+
     /*
      * NOTEs:
      * 1- To build must change this VS option.
@@ -20,7 +26,6 @@ namespace Unreal_Dumping_Agent
      * 2- For Debugging Go Debug->Windows->ExceptionSettings->Check all items xD.
      */
 
-    // TODO: complete ui window to look as UFT.
     public class Program
     {
         private static void Main() => new Program().MainAsync().GetAwaiter().GetResult();

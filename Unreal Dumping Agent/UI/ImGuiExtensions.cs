@@ -12,7 +12,7 @@ namespace Unreal_Dumping_Agent.UI
     {
         public static void VerticalSeparator()
         {
-
+            ImGui.GetWindowDrawList().AddLine(new Vector2(10, 50), new Vector2(60, 60), ImGui.GetColorU32(ImGuiCol.Text));
         }
     }
 }
