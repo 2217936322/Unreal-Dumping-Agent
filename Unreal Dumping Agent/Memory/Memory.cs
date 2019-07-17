@@ -12,7 +12,6 @@ using ClrPlus.Windows.Api.Structures;
 
 namespace Unreal_Dumping_Agent.Memory
 {
-    // TODO: Add SetDebugPrivileges
     public class Memory
     {
         private readonly Process _targetProcess;
