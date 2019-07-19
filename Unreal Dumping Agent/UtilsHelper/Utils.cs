@@ -13,7 +13,7 @@ namespace Unreal_Dumping_Agent.UtilsHelper
     public static class Utils
     {
         public const string Version = "1.0.0";
-        public const string Title = "Unreal Suspender";
+        public const string Title = "Welcome Agent";
 
         #region Structs
         public struct MemoryRegion

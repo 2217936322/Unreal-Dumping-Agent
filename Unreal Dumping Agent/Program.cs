@@ -4,7 +4,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Numerics;
 using System.Threading;
+using System.Windows.Forms;
 using ImGuiNET;
+using SharpDX.Direct3D11;
+using Unreal_Dumping_Agent.Chat;
 using Unreal_Dumping_Agent.UI;
 using Unreal_Dumping_Agent.UtilsHelper;
 using Veldrid;
@@ -28,16 +31,23 @@ namespace Unreal_Dumping_Agent
 
     public class Program
     {
+        private readonly ChatManager _chatManager = new ChatManager();
+
         private static void Main() => new Program().MainAsync().GetAwaiter().GetResult();
 
         private async Task MainAsync()
         {
+            var initChat = _chatManager.Init();
+
             // Init Window
             Utils.MainWindow = new UiWindow();
             Utils.MainWindow.Setup($"Unreal Dumper Agent, Version: {Utils.Version} - {Utils.Title}", new Vector2(1050, 530), new Vector2(0, 0), MainUi);
             Utils.MainWindow.SetOnCenter();
             Utils.MainWindow.SetIcon(Properties.Resources.win);
             Utils.MainWindow.Show();
+
+            // Wait ChatManager init
+            await initChat;
 
             // Wait until window closed
             while (!Utils.MainWindow.Closed())

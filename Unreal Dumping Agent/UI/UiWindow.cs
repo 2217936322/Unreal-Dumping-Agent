@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Drawing;
 using System.Linq;
 using System.Numerics;
 using System.Threading;
@@ -21,6 +22,7 @@ namespace Unreal_Dumping_Agent.UI
         private CommandList _cl;
         private ImGuiController _controller;
         private bool _init;
+        private readonly Size _minSize = new Size(600, 600);
 
         private static readonly Vector3 ClearColor = new Vector3(0.45f, 0.55f, 0.6f);
         private const ImGuiWindowFlags WindowFlags = ImGuiWindowFlags.AlwaysAutoResize |
@@ -28,7 +30,6 @@ namespace Unreal_Dumping_Agent.UI
                                                      ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoMove |
                                                      ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar |
                                                      ImGuiWindowFlags.NoScrollWithMouse;
-
 
         public bool Closed()
         {
@@ -101,11 +102,20 @@ namespace Unreal_Dumping_Agent.UI
                     out _window,
                     out _gd);
 
-                _window.Resizable = false;
-
                 _cl = _gd.ResourceFactory.CreateCommandList();
                 _controller = new ImGuiController(_gd, _gd.MainSwapchain.Framebuffer.OutputDescription, _window.Width, _window.Height);
                 _init = true;
+
+                _window.Resized += () => 
+                {
+                    if (_window.Width < _minSize.Width)
+                        _window.Width = _minSize.Width;
+                    else if (_window.Height < _minSize.Height)
+                        _window.Height = _minSize.Height;
+
+                    _gd.MainSwapchain.Resize((uint)_window.Width, (uint)_window.Height);
+                    _controller.WindowResize(_window.Width, _window.Height);
+                };
 
                 // Main application loop
                 while (_window.Exists)
@@ -118,7 +128,7 @@ namespace Unreal_Dumping_Agent.UI
                     _controller.Update(1f / 60f, snapshot);
 
                     ImGui.SetNextWindowPos(new Vector2(0, 0));
-                    ImGui.SetNextWindowSize(wSize);
+                    ImGui.SetNextWindowSize(new Vector2(_window.Width, _window.Height));
                     ImGui.Begin("MainWindow", WindowFlags);
                     imGuiCode(this);
                     ImGui.End();
@@ -140,11 +150,13 @@ namespace Unreal_Dumping_Agent.UI
 
             return true;
         }
+
         public void Show()
         {
             if (!_init)
                 throw new Exception("Call setup first.!!");
 
+            _window.WindowState = WindowState.Maximized;
             _window.Visible = true;
         }
 
