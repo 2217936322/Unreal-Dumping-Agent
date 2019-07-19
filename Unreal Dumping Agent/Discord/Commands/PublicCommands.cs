@@ -13,7 +13,7 @@ namespace Unreal_Dumping_Agent.Discord.Commands
         [Command("add"), Summary("Start private chat with user")]
         public async Task AddMe()
         {
-            await Context.User.SendMessageAsync("Hi noob.");
+            await Context.User.SendMessageAsync("Hi noob. " + DiscordText.GetRandomHappyEmoji());
         }
     }
 }

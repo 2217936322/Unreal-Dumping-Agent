@@ -7,9 +7,20 @@ using Ceen.Httpd;
 using Ceen.Httpd.Handler;
 using Ceen.Httpd.Logging;
 using Ceen.Mvc;
+using Newtonsoft.Json;
 
 namespace Unreal_Dumping_Agent.Http
 {
+    public class TimeOfDayHandler : IHttpModule
+    {
+        public async Task<bool> HandleAsync(IHttpContext context)
+        {
+            context.Response.SetNonCacheable();
+            await context.Response.WriteAllJsonAsync(JsonConvert.SerializeObject(new { time = DateTime.Now.TimeOfDay }));
+            return true;
+        }
+    }
+
     public class HttpManager : IDisposable
     {
         private readonly CancellationTokenSource _tcs = new CancellationTokenSource();
@@ -17,24 +28,19 @@ namespace Unreal_Dumping_Agent.Http
 
         public bool Working { get; set; }
         public int Port { get; set; }
-        public string SitePath { get; set; }
 
-        public void Start(string sitePath, int port)
+        public void Start(int port)
         {
             Port = port;
-            SitePath = sitePath;
+
+            var asm = typeof(ApiExampleController).Assembly;
+            var route = asm.ToRoute(new ControllerRouterConfig(typeof(ApiExampleController)));
 
             // API REST
             var config = new ServerConfig()
                 .AddLogger(new CLFStdOut())
-                .AddRoute(new FileHandler(SitePath))
-                .AddRoute(typeof(ApiUdaController).Assembly //Load all types in assembly
-                    .ToRoute(new ControllerRouterConfig(
-                            // Set as default controller
-                            typeof(ApiUdaController)
-                        )
-                    )
-                );
+                .AddRoute("/", new TimeOfDayHandler())
+                .AddRoute(route);
 
             // HttpServer
             _listenTask = HttpServer.ListenAsync(

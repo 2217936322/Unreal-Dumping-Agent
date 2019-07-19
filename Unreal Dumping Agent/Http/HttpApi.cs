@@ -9,13 +9,13 @@ using Ceen.Mvc;
 namespace Unreal_Dumping_Agent.Http
 {
     [Name("api")]
-    internal interface IApi : IControllerPrefix { }
+    public interface IAPI : IControllerPrefix { }
 
     [Name("v1")]
-    internal interface IApiV1 : IApi { }
+    public interface IApiV1 : IAPI { }
 
     [Name("entry")]
-    public class ApiUdaController : Controller, IApiV1
+    public class ApiExampleController : Controller, IApiV1
     {
         [HttpGet]
         public IResult Index(IHttpContext context)
@@ -28,10 +28,11 @@ namespace Unreal_Dumping_Agent.Http
             return Html("<body>Hello!</body>");
         }
 
-        [Route("{id}/detail")]
+        [HttpGet, Route("{id}/detail")]
         public IResult Detail(int id)
         {
             return Status(NoContent, "I have no content :(");
         }
     }
+
 }
