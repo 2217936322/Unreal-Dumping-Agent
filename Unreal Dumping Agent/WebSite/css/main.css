@@ -1,0 +1,68 @@
+@font-face {
+    font-family: "CodecLight";
+    src: url("../fonts/Codec-Extralight.ttf");
+}
+
+@font-face {
+    font-family: "CodecBlod";
+    src: url("../fonts/Codec-ExtraBold.ttf");
+}
+
+@font-face {
+    font-family: "AdequateLight";
+    src: url("../fonts/Adequate-ExtraLight.ttf");
+}
+
+html {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-image: url("../img/bg.png");
+    height: 100%;
+    margin: 0;
+}
+
+.no-select {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-user-drag: none;
+    pointer-events: none;
+}
+
+#chat-room {
+    height: 100vh;
+    font-family: "CodecLight";
+}
+
+#chat-room-body {
+    height: 95%;
+    margin: 2% 0 2% 0;
+    padding: 2% 2%;
+    border: 2px gray solid;
+    border-radius: 5px;
+    background-color: white;
+}
+
+#chat-room-header {
+    font-family: "CodecBlod";
+    font-size: 20px;
+}
+
+#chat-room-box {
+    font-family: "AdequateLight";
+    height: 86%;
+    overflow-y: scroll;
+    font-size: 12px;
+}
+
+#message-input {
+    border: 0;
+    font-size: 17px;
+    padding: 7px;
+}

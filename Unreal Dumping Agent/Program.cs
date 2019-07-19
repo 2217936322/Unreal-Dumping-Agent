@@ -8,6 +8,7 @@ using System.Windows.Forms;
 using ImGuiNET;
 using SharpDX.Direct3D11;
 using Unreal_Dumping_Agent.Chat;
+using Unreal_Dumping_Agent.Http;
 using Unreal_Dumping_Agent.UI;
 using Unreal_Dumping_Agent.UtilsHelper;
 using Veldrid;
@@ -32,12 +33,14 @@ namespace Unreal_Dumping_Agent
     public class Program
     {
         private readonly ChatManager _chatManager = new ChatManager();
+        private readonly HttpManager _httpManager = new HttpManager();
 
         private static void Main() => new Program().MainAsync().GetAwaiter().GetResult();
 
         private async Task MainAsync()
         {
             var initChat = _chatManager.Init();
+            _httpManager.Start(@"C:\Users\CorrM\source\repos\Unreal Dumping Agent\Unreal Dumping Agent\WebSite\", 8080);
 
             // Init Window
             Utils.MainWindow = new UiWindow();

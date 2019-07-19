@@ -84,6 +84,8 @@
   <ItemGroup>
     <Compile Include="Chat\ChatManager.cs" />
     <Compile Include="Chat\ChatStructs.cs" />
+    <Compile Include="Http\HttpApi.cs" />
+    <Compile Include="Http\HttpManager.cs" />
     <Compile Include="Memory\Memory.cs" />
     <Compile Include="Memory\PatternScanner.cs" />
     <Compile Include="Program.cs" />
@@ -138,6 +140,12 @@
     <EmbeddedResource Include="Resources\HLSL\imgui-vertex.hlsl" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Ceen.Httpd">
+      <Version>0.9.7</Version>
+    </PackageReference>
+    <PackageReference Include="Ceen.Mvc">
+      <Version>0.9.7</Version>
+    </PackageReference>
     <PackageReference Include="ClrPlus.Windows.Api">
       <Version>1.8.0.81</Version>
     </PackageReference>
