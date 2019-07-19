@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using ClrPlus.Windows.Api;
 using ClrPlus.Windows.Api.Structures;
+using Unreal_Dumping_Agent.UI;
 
 namespace Unreal_Dumping_Agent.UtilsHelper
 {
@@ -23,7 +24,7 @@ namespace Unreal_Dumping_Agent.UtilsHelper
         #endregion
 
         #region Variables
-
+        public static UiWindow MainWindow;
         #endregion
 
         #region Tool
@@ -42,14 +43,6 @@ namespace Unreal_Dumping_Agent.UtilsHelper
 #else
             return true;
 #endif
-        }
-        public static void ConsoleText(string category, string message, ConsoleColor textColor)
-        {
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.Write($"[{category,-10}] ");
-            Console.ForegroundColor = textColor;
-            Console.WriteLine(message);
-            Console.ResetColor();
         }
         #endregion
 
