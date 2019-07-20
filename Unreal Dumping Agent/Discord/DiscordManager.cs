@@ -72,7 +72,7 @@ namespace Unreal_Dumping_Agent.Discord
             if (context.Message == null || string.IsNullOrEmpty(context.Message.Content)) return;
             if (context.User.IsBot) return;
 
-            MessageHandler?.Invoke(message, context);
+            await Task.Run(() => MessageHandler?.Invoke(message, context));
         }
         public Task<IResult> ExecuteAsync(ICommandContext context, int argPos)
         {

@@ -86,8 +86,8 @@ namespace Unreal_Dumping_Agent.Memory
                     long allocSize = end.ToInt64() - start.ToInt64() >= (long)info.RegionSize ? (long)info.RegionSize : end.ToInt64() - start.ToInt64();
 
                     // Bad Memory
-                    if (!((Win32.MemoryState)info.State).HasFlag(Win32.MemoryState.MEM_COMMIT) ||
-                        ((Win32.MemoryProtection)info.Protect).HasFlag(Win32.MemoryProtection.PAGE_NOACCESS | Win32.MemoryProtection.PAGE_WRITECOPY | Win32.MemoryProtection.PAGE_TARGETS_INVALID) ||
+                    if (!((Win32.MemoryState)info.State).HasFlag(Win32.MemoryState.MemCommit) ||
+                        ((Win32.MemoryProtection)info.Protect).HasFlag(Win32.MemoryProtection.PageNoAccess | Win32.MemoryProtection.PageWriteCopy | Win32.MemoryProtection.PageTargetsInvalid) ||
                         info.RegionSize > 0x300000)
                     {
                         // Get next address

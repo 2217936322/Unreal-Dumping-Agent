@@ -8,6 +8,7 @@ namespace Unreal_Dumping_Agent.Discord
     {
         private static readonly List<string> AngryEmoji = new List<string> { "triumph", "rage", "pouting_cat", "unamused" };
         private static readonly List<string> HappyEmoji = new List<string> { "smile", "joy", "joy_cat", "smile_cat", "smiley_cat", "smiley" };
+        private static readonly List<string> SadEmoji = new List<string> { "cry", "tired_face", "crying_cat_face", "grimacing", "cold_sweat", "disappointed_relieved", "sob", "crying_cat_face" };
 
         private static readonly List<string> UnderstandWordPrefix = new List<string>
         {
@@ -23,7 +24,6 @@ namespace Unreal_Dumping_Agent.Discord
             "i can't get it !!",
             "i can't get it kill me pls !",
             "i think we can't keep talking.",
-            "go kill your self NOW.",
             "man i can't get it can u start be clear.?",
             "don't talk to me Again"
         };
@@ -39,6 +39,10 @@ namespace Unreal_Dumping_Agent.Discord
         public static string GetRandomHappyEmoji()
         {
             return $":{HappyEmoji.GetRandomItem()}:";
+        }
+        public static string GetRandomSadEmoji()
+        {
+            return $":{SadEmoji.GetRandomItem()}:";
         }
         public static string GetRandomNotUnderstandString()
         {

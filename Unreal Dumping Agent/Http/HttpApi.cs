@@ -14,24 +14,50 @@ namespace Unreal_Dumping_Agent.Http
     [Name("v1")]
     public interface IApiV1 : IAPI { }
 
-    [Name("entry")]
-    public class ApiExampleController : Controller, IApiV1
+    public class ControllerItems
     {
-        [HttpGet]
-        public IResult Index(IHttpContext context)
-        {
-            return OK;
-        }
+        public const string ENTRY_DEFAULT_INDEX = "GET /api/v1/entry";
+        public const string ENTRY_UPDATE = "POST /api/v1/entry/update";
+        public const string ENTRY_INDEX_ID = "GET /api/v1/entry/id";
+        public const string ENTRY_DETAIL_INDEX = "GET /api/v1/entry/detail";
+        public const string ENTRY_DETAIL_CROSS = "GET /api/v1/entry/cross/id";
+        public const string ENTRY_DETAIL_ID = "GET /api/v1/entry/detail/id";
 
-        public IResult Index(int id)
+        [Name("entry")]
+        public class ApiExampleController : Controller, IApiV1
         {
-            return Html("<body>Hello!</body>");
-        }
 
-        [HttpGet, Route("{id}/detail")]
-        public IResult Detail(int id)
-        {
-            return Status(NoContent, "I have no content :(");
+            [HttpGet]
+            public IResult Index(IHttpContext context)
+            {
+                return Status(HttpStatusCode.OK, ENTRY_DEFAULT_INDEX);
+            }
+
+            [HttpGet]
+            [Route("{id}/vss-{*blurp}")]
+            [Route("{id}")]
+            public IResult Index(IHttpContext context, [Parameter(Source = ParameterSource.Url)]int id, string blurp = "my-blurp")
+            {
+                return Status(HttpStatusCode.OK, ENTRY_INDEX_ID);
+            }
+
+            [Route("detail/{id}")]
+            public IResult Detail(IHttpContext context, int id)
+            {
+                return Status(HttpStatusCode.OK, ENTRY_DETAIL_ID);
+            }
+
+            [Route("{id}/detail")]
+            public IResult Cross(IHttpContext context, int id)
+            {
+                return Status(HttpStatusCode.OK, ENTRY_DETAIL_CROSS);
+            }
+
+            public IResult Detail(IHttpContext context)
+            {
+                return Status(HttpStatusCode.OK, ENTRY_DETAIL_INDEX);
+            }
+
         }
     }
 

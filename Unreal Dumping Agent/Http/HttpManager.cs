@@ -33,13 +33,16 @@ namespace Unreal_Dumping_Agent.Http
         {
             Port = port;
 
-            var asm = typeof(ApiExampleController).Assembly;
-            var route = asm.ToRoute(new ControllerRouterConfig(typeof(ApiExampleController)));
+            var routerConfig = new ControllerRouterConfig(typeof(ControllerItems.ApiExampleController))
+            {
+                Debug = true
+            };
+            var asm = typeof(ControllerItems.ApiExampleController).Assembly;
+            var route = asm.ToRoute(routerConfig);
 
             // API REST
             var config = new ServerConfig()
                 .AddLogger(new CLFStdOut())
-                .AddRoute("/", new TimeOfDayHandler())
                 .AddRoute(route);
 
             // HttpServer

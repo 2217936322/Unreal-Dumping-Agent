@@ -5,8 +5,6 @@ using System.Linq;
 using System.Net.Mime;
 using System.Runtime.InteropServices;
 using Unreal_Dumping_Agent.UtilsHelper;
-using ClrPlus.Windows.Api;
-using ClrPlus.Windows.Api.Structures;
 
 namespace Unreal_Dumping_Agent.Memory
 {
@@ -16,8 +14,12 @@ namespace Unreal_Dumping_Agent.Memory
      */
     public class Memory
     {
+        private delegate int NtQueryVirtualMemory(IntPtr processHandle, IntPtr baseAddress,
+            Win32.MemoryInformationClass memoryInformationClass, [Out] object buffer,
+            ulong length, ref ulong resultLength);
+
         public Process TargetProcess { get; }
-        public SafeProcessHandle ProcessHandle { get; }
+        public IntPtr ProcessHandle { get; }
         public bool Is64Bit { get; }
 
         public Memory(Process targetProcess)
@@ -26,7 +28,7 @@ namespace Unreal_Dumping_Agent.Memory
                 return;
 
             // Open Process
-            ProcessHandle = Kernel32.OpenProcess(0x000F0000 | 0x00100000 | 0xFFFF, false, targetProcess.Id);
+            ProcessHandle = Win32.OpenProcess(Win32.ProcessAccessFlags.All, false, targetProcess.Id);
             Is64Bit = targetProcess.Is64Bit();
             TargetProcess = targetProcess;
         }
@@ -73,6 +75,10 @@ namespace Unreal_Dumping_Agent.Memory
         public static bool IsValidProcess(int pId)
         {
             return IsValidProcess(pId, out _);
+        }
+        public bool IsValidProcess()
+        {
+            return !TargetProcess.HasExited;
         }
         public bool SuspendProcess()
         {
@@ -153,5 +159,36 @@ namespace Unreal_Dumping_Agent.Memory
         }
         
         #endregion
+
+        public bool IsStaticAddress(IntPtr address)
+        {
+            if (!IsValidProcess())
+                throw new Exception("Process not found !!");
+            if (address == IntPtr.Zero)
+                return false;
+
+            var ntQueryVirtualMemory = Utils.GetProcAddress<NtQueryVirtualMemory>("ntdll.dll", "NtQueryVirtualMemory");
+            ulong length = 0;
+            Win32.SectionInfo sectionInformation = new Win32.SectionInfo();
+            int retStatus = ntQueryVirtualMemory(ProcessHandle, 
+                address, 
+                Win32.MemoryInformationClass.MemoryMappedFilenameInformation, 
+                sectionInformation,
+                (ulong)Marshal.SizeOf<Win32.SectionInfo>(),
+                ref length);
+
+
+            if (!Win32.NtSuccess(retStatus))
+                return false;
+
+            string deviceName = sectionInformation.SzData;
+            string filePath = deviceName;
+            filePath = filePath.Substring(filePath.LastIndexOf('\\') - 1);
+
+            string driveLetters = string.Empty;
+            var driveSize = Win32.GetLogicalDriveStrings(Win32.MaxPath, driveLetters);
+
+            return true;
+        }
     }
 }

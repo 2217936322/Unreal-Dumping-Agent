@@ -16,7 +16,9 @@ namespace Unreal_Dumping_Agent.Chat
             { "gname", EQuestionTask.GNames },
             { "gnames", EQuestionTask.GNames },
             { "gobject", EQuestionTask.GObject },
-            { "gobjects", EQuestionTask.GObject }
+            { "gobjects", EQuestionTask.GObject },
+            { "process", EQuestionTask.Process },
+            { "target", EQuestionTask.Process },
         };
         private static string AppPath => Path.GetDirectoryName(Environment.GetCommandLineArgs()[0]);
         private static string ModelPath => Path.Combine(AppPath, "Models", "model.zip");
@@ -118,8 +120,10 @@ namespace Unreal_Dumping_Agent.Chat
             ChatQuestion singleQuestion = new ChatQuestion() { QuestionText = question.ToLower() };
             foreach (var s in question.ToLower().Split(' '))
             {
-                if (ChatTasks.ContainsKey(s))
-                    singleQuestion.QuestionTask += (int)ChatTasks[s];
+                if (!ChatTasks.ContainsKey(s)) continue;
+
+                singleQuestion.QuestionTask = (int)ChatTasks[s];
+                break;
             }
 
             return Task.Run(() => _predEngine.Predict(singleQuestion));

@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Diagnostics;
 using Microsoft.ML.Data;
 
 namespace Unreal_Dumping_Agent.Chat
@@ -11,14 +6,20 @@ namespace Unreal_Dumping_Agent.Chat
     public enum EQuestionType
     {
         None = 0,
-        Find = 1
+        HiWelcome = 1,
+        Thanks = 2,
+        LifeAsk = 3,
+        Ask = 4,
+        Funny = 5,
+        Find = 101,
+        LockProcess = 102
     }
     public enum EQuestionTask
     {
         None = 0,
         GNames = 1,
         GObject = 2,
-        GNamesAndGObject = GNames | GObject
+        Process = 3
     }
 
     internal class ChatQuestion
@@ -27,7 +28,6 @@ namespace Unreal_Dumping_Agent.Chat
         public int QuestionType { get; set; } // EQuestionType
         public int QuestionTask { get; set; } // EQuestionTask
     }
-
     [DebuggerDisplay("Type = {TypeEnum()}, Task = {TaskEnum()}")]
     public class QuestionPrediction
     {
