@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Net.Mime;
 using System.Runtime.InteropServices;
+using System.Text;
 using Unreal_Dumping_Agent.UtilsHelper;
 
 namespace Unreal_Dumping_Agent.Memory
@@ -14,10 +16,6 @@ namespace Unreal_Dumping_Agent.Memory
      */
     public class Memory
     {
-        private delegate int NtQueryVirtualMemory(IntPtr processHandle, IntPtr baseAddress,
-            Win32.MemoryInformationClass memoryInformationClass, [Out] object buffer,
-            ulong length, ref ulong resultLength);
-
         public Process TargetProcess { get; }
         public IntPtr ProcessHandle { get; }
         public bool Is64Bit { get; }
@@ -167,28 +165,36 @@ namespace Unreal_Dumping_Agent.Memory
             if (address == IntPtr.Zero)
                 return false;
 
-            var ntQueryVirtualMemory = Utils.GetProcAddress<NtQueryVirtualMemory>("ntdll.dll", "NtQueryVirtualMemory");
+            var ntQueryVirtualMemory = Utils.GetProcAddress<Win32.NtQueryVirtualMemory>("ntdll.dll", "NtQueryVirtualMemory");
             ulong length = 0;
-            Win32.SectionInfo sectionInformation = new Win32.SectionInfo();
+            var sectionInformation = new HeapHelper.StructAllocer<Win32.SectionInfo>();
             int retStatus = ntQueryVirtualMemory(ProcessHandle, 
                 address, 
-                Win32.MemoryInformationClass.MemoryMappedFilenameInformation, 
+                Win32.MemoryInformationClass.MemoryMappedFilenameInformation,
                 sectionInformation,
                 (ulong)Marshal.SizeOf<Win32.SectionInfo>(),
                 ref length);
 
-
             if (!Win32.NtSuccess(retStatus))
                 return false;
 
-            string deviceName = sectionInformation.SzData;
+            sectionInformation.Update();
+            string deviceName = sectionInformation.ManageStruct.SzData;
             string filePath = deviceName;
-            filePath = filePath.Substring(filePath.LastIndexOf('\\') - 1);
+            for (int i = 0; i < 3; i++)
+                filePath = filePath.Substring(filePath.IndexOf('\\') + 1);
 
-            string driveLetters = string.Empty;
-            var driveSize = Win32.GetLogicalDriveStrings(Win32.MaxPath, driveLetters);
+            var driveLetters = DriveInfo.GetDrives().Select(d => d.Name.Replace("\\", "")).ToList();
+            foreach (var driveLetter in driveLetters)
+            {
+                var sb = new StringBuilder(64);
+                Win32.QueryDosDevice(driveLetter, sb, 64 * 2); // * 2 Unicode
 
-            return true;
+                if (deviceName.Contains(sb.ToString()))
+                    return true;
+            }
+
+            return false;
         }
     }
 }

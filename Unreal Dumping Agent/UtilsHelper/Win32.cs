@@ -12,6 +12,12 @@ namespace Unreal_Dumping_Agent.UtilsHelper
     /// </summary>
     public static class Win32
     {
+        #region Delgates
+        public delegate int NtQueryVirtualMemory(IntPtr processHandle, IntPtr baseAddress,
+            MemoryInformationClass memoryInformationClass, [Out] IntPtr buffer,
+            ulong length, ref ulong resultLength);
+        #endregion
+
         #region Structs Enums Flags
         public const uint HandleFlagInherit = 0x00000001;
         public const uint HandleFlagProtectFromClose = 0x00000002;
@@ -109,8 +115,8 @@ namespace Unreal_Dumping_Agent.UtilsHelper
             public short MaxLen;
             [MarshalAs(UnmanagedType.LPWStr)]
             public string SzData;
-            [MarshalAs(UnmanagedType.LPWStr)]
-            public string pData;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = MaxPath * 2)]
+            public byte[] pData;
         }
 #if x64
         [StructLayout(LayoutKind.Sequential)]
@@ -145,43 +151,65 @@ namespace Unreal_Dumping_Agent.UtilsHelper
 
         [DllImport("user32.dll", SetLastError = true)]
         public static extern bool FlashWindow(IntPtr hwnd, bool bInvert);
+
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern bool GetHandleInformation(IntPtr hObject, out uint lpdwFlags);
+
         [DllImport("ntdll.dll", SetLastError = true)]
         public static extern int NtSuspendProcess(IntPtr processHandle);
+
         [DllImport("ntdll.dll", SetLastError = true)]
         public static extern int NtResumeProcess(IntPtr processHandle);
+
         [DllImport("ntdll.dll", SetLastError = true)]
         public static extern int NtTerminateProcess(IntPtr processHandle, int exitStatus);
+
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern bool ReadProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, [Out] object lpBuffer, long dwSize, out IntPtr lpNumberOfBytesRead);
+
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern bool WriteProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, object lpBuffer, long dwSize, out IntPtr lpNumberOfBytesWritten);
+
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern void GetSystemInfo(out SystemInfo info);
+
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern IntPtr OpenProcess(ProcessAccessFlags processAccess, bool bInheritHandle, int processId);
+
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern bool CloseHandle(IntPtr hHandle);
+
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern bool IsWow64Process([In] IntPtr processHandle, [Out] out bool wow64Process);
+
         [DllImport("kernel32.dll")]
         public static extern int VirtualQueryEx(IntPtr hProcess, IntPtr lpAddress, out MemoryBasicInformation lpBuffer, uint dwLength);
+
         [DllImport("kernel32", CharSet = CharSet.Ansi, ExactSpelling = true, SetLastError = true)]
         public static extern IntPtr GetProcAddress(IntPtr hModule, string procName);
+
         [DllImport("kernel32", SetLastError = true, CharSet = CharSet.Ansi)]
         public static extern IntPtr LoadLibrary([MarshalAs(UnmanagedType.LPStr)]string lpFileName);
-        [DllImport("kernel32", SetLastError = true, CharSet = CharSet.Unicode)]
+
+        [DllImport("kernel32", CharSet = CharSet.Auto, SetLastError = true)]
         public static extern IntPtr GetLogicalDriveStrings(int nBufferLength, [Out, MarshalAs(UnmanagedType.LPWStr)] string lpBuffer);
+
         [DllImport("user32.dll", SetLastError = true)]
         public static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
+
         [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         public static extern IntPtr FindWindowEx(IntPtr parentHandle, IntPtr childAfter, string className, string windowTitle);
+
         [DllImport("user32.dll")]
         public static extern IntPtr GetForegroundWindow();
+
         [DllImport("user32.dll", SetLastError = true)]
         public static extern int GetWindowThreadProcessId(IntPtr hWnd, out int lpdwProcessId);
+
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         public static extern int GetWindowText(IntPtr hWnd, StringBuilder lpString, int nMaxCount);
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        public static extern uint QueryDosDevice(string lpDeviceName, StringBuilder lpTargetPath, int ucchMax);
     }
 }

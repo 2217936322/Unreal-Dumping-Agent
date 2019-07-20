@@ -69,7 +69,7 @@ namespace Unreal_Dumping_Agent.UtilsHelper
             Win32.CloseHandle(processHandle);
             return !ret;
         }
-        public static TDelegate GetProcAddress<TDelegate>(string dllName, string funcName) where TDelegate : Delegate
+        public static TDelegate GetProcAddress<TDelegate>(string dllName, string funcName) where TDelegate : System.Delegate
         {
             IntPtr funcAddress = Win32.GetProcAddress(Win32.LoadLibrary(dllName), funcName);
             return Marshal.GetDelegateForFunctionPointer<TDelegate>(funcAddress);

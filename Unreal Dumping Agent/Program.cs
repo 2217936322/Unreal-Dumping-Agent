@@ -15,6 +15,10 @@ using Unreal_Dumping_Agent.UtilsHelper;
 
 namespace Unreal_Dumping_Agent
 {
+    /**
+     * NOTES:
+     * 1- To debug async Exception Settings -> Check Common Language Runtime
+     */
     internal class Program
     {
         private readonly ChatManager _chatManager = new ChatManager();
@@ -31,8 +35,21 @@ namespace Unreal_Dumping_Agent
         }
         #endregion
 
+        private static void Test()
+        {
+            Utils.MemObj = new Memory.Memory(Utils.DetectUnrealGame());
+            Utils.MemObj.IsStaticAddress(new IntPtr(0x491B4A50D0));
+
+            Console.ReadLine();
+        }
+
         private async Task MainAsync()
         {
+            // TEST
+            Test();
+
+            return;
+
             // Init
             Utils.BotWorkType = Utils.BotType.Local;
             var initChat = _chatManager.Init();
@@ -75,8 +92,8 @@ namespace Unreal_Dumping_Agent
             }
 
             // message from DM
-            var userTask = await _chatManager.PredictQuestion(context.Message.Content);
-            if (userTask.TypeEnum() == EQuestionType.None)
+            var uTask = await _chatManager.PredictQuestion(context.Message.Content);
+            if (uTask.TypeEnum() == EQuestionType.None)
             {
                 await context.User.SendMessageAsync(DiscordText.GetRandomNotUnderstandString());
                 return;
@@ -105,10 +122,16 @@ namespace Unreal_Dumping_Agent
             }
 
             /* COMMANDS START HERE */
-            await context.User.SendMessageAsync($"ok, that's what i think you need to do:\n`{userTask.TypeEnum():G}` => `{userTask.TaskEnum():G}`");
+            await context.User.SendMessageAsync($"ok, that's what i think you need to do:\n`{uTask.TypeEnum():G}` => `{uTask.TaskEnum():G}`\n--------------------------");
 
+            await ExecuteTasks(curUser, uTask, message, context);
+        }
+
+        private async Task ExecuteTasks(UsersInfo curUser, QuestionPrediction uTask, SocketUserMessage messageParam, SocketCommandContext context)
+        {
             // Lock process, auto detect process
-            if (userTask.TypeEnum() == EQuestionType.LockProcess)
+            if (uTask.TypeEnum() == EQuestionType.LockProcess ||
+                uTask.TypeEnum() == EQuestionType.Find && uTask.TaskEnum() == EQuestionTask.Process)
             {
                 // Try to get process id
                 bool findProcessId = int.TryParse(Regex.Match(context.Message.Content, @"\d+").Value, out int processId);
@@ -131,11 +154,11 @@ namespace Unreal_Dumping_Agent
 
             }
             // Finder
-            else if (userTask.TypeEnum() == EQuestionType.Find)
+            else if (uTask.TypeEnum() == EQuestionType.Find)
             {
                 if (Utils.MemObj == null)
                 {
-                    if (userTask.TaskEnum() == EQuestionTask.None)
+                    if (uTask.TaskEnum() == EQuestionTask.None)
                         await context.User.SendMessageAsync(DiscordText.GetRandomNotUnderstandString());
                     else
                         await context.User.SendMessageAsync($"Give me your target !!");
@@ -144,7 +167,7 @@ namespace Unreal_Dumping_Agent
                 }
 
                 // Do work
-                switch (userTask.TaskEnum())
+                switch (uTask.TaskEnum())
                 {
                     case EQuestionTask.GNames:
 
