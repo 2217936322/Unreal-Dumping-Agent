@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -73,6 +74,23 @@ namespace Unreal_Dumping_Agent.UtilsHelper
         {
             IntPtr funcAddress = Win32.GetProcAddress(Win32.LoadLibrary(dllName), funcName);
             return Marshal.GetDelegateForFunctionPointer<TDelegate>(funcAddress);
+        }
+        #endregion
+
+        #region Extensions
+        public static IEnumerable<long> SteppedIterator(long startIndex, long endIndex, long stepSize)
+        {
+            for (long i = startIndex; i < endIndex; i += stepSize)
+                yield return i;
+        }
+        public static bool Equal(this byte[] b1, byte[] b2)
+        {
+            if (b1 == b2) return true;
+            if (b1 == null || b2 == null) return false;
+            if (b1.Length != b2.Length) return false;
+            for (int i = 0; i < b1.Length; i++)
+                if (b1[i] != b2[i]) return false;
+            return true;
         }
         #endregion
 

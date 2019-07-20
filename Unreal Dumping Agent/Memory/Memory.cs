@@ -101,12 +101,10 @@ namespace Unreal_Dumping_Agent.Memory
             return new IntPtr(Is64Bit ? Rpm<long>(lpBaseAddress) : Rpm<int>(lpBaseAddress));
         }
 
-        public byte[] ReadBytes(IntPtr lpBaseAddress, long len)
+        public bool ReadBytes(IntPtr lpBaseAddress, long len, out byte[] bytes)
         {
-            var buffer = new byte[len];
-            Win32.ReadProcessMemory(TargetProcess.Handle, lpBaseAddress, buffer, len, out _);
-
-            return buffer;
+            bytes = new byte[len];
+            return Win32.ReadProcessMemory(TargetProcess.Handle, lpBaseAddress, bytes, len, out _);
         }
         public string ReadString(IntPtr lpBaseAddress, bool isUnicode = false)
         {
@@ -115,7 +113,7 @@ namespace Unreal_Dumping_Agent.Memory
 
             while (true)
             {
-                var buf = ReadBytes(lpBaseAddress, charSize);
+                ReadBytes(lpBaseAddress, charSize, out var buf);
 
                 // Null-Terminator
                 if (buf.All(b => b == 0))
@@ -127,9 +125,9 @@ namespace Unreal_Dumping_Agent.Memory
 
             return ret;
         }
-        public byte[] ReadPBytes(IntPtr lpBaseAddress, long len)
+        public bool ReadPBytes(IntPtr lpBaseAddress, long len, out byte[] bytes)
         {
-            return ReadBytes(ReadAddress(lpBaseAddress), len);
+            return ReadBytes(ReadAddress(lpBaseAddress), len, out bytes);
         }
         public string ReadPString(IntPtr lpBaseAddress, bool isUnicode = false)
         {
@@ -138,10 +136,8 @@ namespace Unreal_Dumping_Agent.Memory
 
         public T Rpm<T>(IntPtr lpBaseAddress) where T : struct
         {
-            var buffer = new T();
-            Win32.ReadProcessMemory(TargetProcess.Handle, lpBaseAddress, buffer, Marshal.SizeOf(buffer), out _);
-
-            return buffer;
+            ReadBytes(lpBaseAddress, Marshal.SizeOf<T>(), out var buffer);
+            return buffer.ToStructure<T>();
         }
         public T RpmPointer<T>(IntPtr lpBaseAddress) where T : struct
         {
@@ -149,7 +145,8 @@ namespace Unreal_Dumping_Agent.Memory
         }
         public bool Wpm<T>(IntPtr lpBaseAddress, T value) where T : struct
         {
-            return Win32.WriteProcessMemory(TargetProcess.Handle, lpBaseAddress, value, Marshal.SizeOf(value), out _);
+            byte[] bytes = BitConverter.GetBytes((dynamic)value);
+            return Win32.WriteProcessMemory(TargetProcess.Handle, lpBaseAddress, bytes, Marshal.SizeOf<T>(), out _);
         }
         public bool WpmPointer<T>(IntPtr lpBaseAddress, T value) where T : struct
         {
@@ -160,6 +157,12 @@ namespace Unreal_Dumping_Agent.Memory
 
         public bool IsStaticAddress(IntPtr address)
         {
+            /*
+             * Thanks To Roman_Ablo @ GuidedHacking
+             * https://guidedhacking.com/threads/hyperscan-fast-vast-memory-scanner.9659/
+             * i converted to C#
+             */
+
             if (!IsValidProcess())
                 throw new Exception("Process not found !!");
             if (address == IntPtr.Zero)

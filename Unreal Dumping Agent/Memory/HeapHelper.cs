@@ -127,5 +127,20 @@ namespace Unreal_Dumping_Agent.Memory
                 return w.ManageString;
             }
         }
+
+        public static T ToStructure<T>(this byte[] bytes) where T : struct
+        {
+            T stuff;
+            GCHandle handle = GCHandle.Alloc(bytes, GCHandleType.Pinned);
+            try
+            {
+                stuff = (T)Marshal.PtrToStructure(handle.AddrOfPinnedObject(), typeof(T));
+            }
+            finally
+            {
+                handle.Free();
+            }
+            return stuff;
+        }
     }
 }

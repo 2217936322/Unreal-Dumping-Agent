@@ -11,6 +11,7 @@ using Unreal_Dumping_Agent.Chat;
 using Unreal_Dumping_Agent.Discord;
 using Unreal_Dumping_Agent.Discord.Misc;
 using Unreal_Dumping_Agent.Http;
+using Unreal_Dumping_Agent.Memory;
 using Unreal_Dumping_Agent.UtilsHelper;
 
 namespace Unreal_Dumping_Agent
@@ -35,18 +36,19 @@ namespace Unreal_Dumping_Agent
         }
         #endregion
 
-        private static void Test()
+        private static async Task Test()
         {
             Utils.MemObj = new Memory.Memory(Utils.DetectUnrealGame());
-            Utils.MemObj.IsStaticAddress(new IntPtr(0x491B4A50D0));
-
-            Console.ReadLine();
+            //var gg = await new Scanner(Utils.MemObj).Scan(50, Scanner.ScanAlignment.Alignment4Bytes, Scanner.ScanType.TypeExact);
+            var pat = PatternScanner.Parse("None", 0, "4E 6F 6E 65 00", 0xFF);
+            var gg = await PatternScanner.FindPattern(Utils.MemObj, new List<PatternScanner.Pattern>() { pat });
+            Console.WriteLine("");
         }
 
         private async Task MainAsync()
         {
             // TEST
-            Test();
+            await Test();
 
             return;
 
