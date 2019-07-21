@@ -23,7 +23,7 @@ namespace Unreal_Dumping_Agent.Memory
             public uint Wildcard;
         }
 
-        public static Pattern Parse(string name, int offset, string hexStr, uint wildcard, string delimiter = " ")
+        public static Pattern Parse(string name, int offset, string hexStr, uint wildcard = 0xFF, string delimiter = " ")
         {
             if (!string.IsNullOrEmpty(delimiter))
                 hexStr = hexStr.Replace(delimiter, "");
@@ -52,7 +52,7 @@ namespace Unreal_Dumping_Agent.Memory
         }
         public static Task<PatternScanResult> FindPattern(Memory mem, List<Pattern> patterns, bool firstOnly = false)
         {
-            return FindPattern(mem, new IntPtr(0x0), new IntPtr(0x7fffffffffff), patterns, firstOnly);
+            return FindPattern(mem, new IntPtr(0x0), new IntPtr(mem.Is64Bit ? 0x7fffffffffff : 0x7fffffff), patterns, firstOnly);
         }
         public static Task<PatternScanResult> FindPattern(Memory mem, IntPtr start, IntPtr end, List<Pattern> patterns, bool firstOnly = false)
         {
@@ -71,7 +71,7 @@ namespace Unreal_Dumping_Agent.Memory
                 // Init Start and End address
                 if (start.ToInt64() < si.MinimumApplicationAddress.ToInt64())
                     start = si.MinimumApplicationAddress;
-                if (end.ToInt64() < si.MaximumApplicationAddress.ToInt64())
+                if (end.ToInt64() > si.MaximumApplicationAddress.ToInt64())
                     end = si.MaximumApplicationAddress;
 
                 // Cycle through memory based on RegionSize
@@ -82,8 +82,8 @@ namespace Unreal_Dumping_Agent.Memory
                     do
                     {
                         // Get Region information
-                        var exitLoop = Win32.VirtualQueryEx(mem.TargetProcess.Handle, currentAddress, out var info, sizeOfStruct) != sizeOfStruct &&
-                                        currentAddress.ToInt64() < end.ToInt64();
+                        var exitLoop = Win32.VirtualQueryEx(mem.TargetProcess.Handle, currentAddress, out var info, sizeOfStruct) != sizeOfStruct ||
+                                        currentAddress.ToInt64() > end.ToInt64();
 
                         if (exitLoop)
                             break;

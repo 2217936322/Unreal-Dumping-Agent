@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
+using Unreal_Dumping_Agent.Memory;
 
 namespace Unreal_Dumping_Agent.UtilsHelper
 {
@@ -32,6 +33,7 @@ namespace Unreal_Dumping_Agent.UtilsHelper
         #region Variables
         public static BotType BotWorkType;
         public static Memory.Memory MemObj;
+        public static Scanner ScanObj;
         #endregion
 
         #region Tool
@@ -59,6 +61,91 @@ namespace Unreal_Dumping_Agent.UtilsHelper
             Console.WriteLine(message);
             Console.ResetColor();
         }
+        #endregion
+
+        #region Address Stuff
+        public static int PointerSize()
+        {
+            return MemObj.Is64Bit ? 0x8 : 0x4;
+        }
+        public static bool IsValidRemoteAddress(IntPtr address)
+        {
+            if (MemObj == null || address == IntPtr.Zero || address.ToInt64() < 0)
+                return false;
+
+            if (Win32.VirtualQueryEx(MemObj.ProcessHandle, address, out var info, (uint)Marshal.SizeOf<Win32.MemoryBasicInformation>()) != 0)
+            {
+		        // Bad Memory
+                return (info.State & (int)Win32.MemoryState.MemCommit) != 0 && (info.Protect & (int)Win32.MemoryProtection.PageNoAccess) == 0;
+            }
+
+            return false;
+        }
+        public static bool IsValidRemotePointer(IntPtr address)
+        {
+            if (MemObj == null || address == IntPtr.Zero || address.ToInt64() < 0)
+                return false;
+
+            address = MemObj.ReadAddress(address);
+            return IsValidRemoteAddress(address);
+        }
+        public static bool IsValidGNamesAddress(IntPtr address, bool chunkCheck = false)
+        {
+            if (MemObj == null || !IsValidRemoteAddress(address))
+                return false;
+
+            if (!chunkCheck && !IsValidRemotePointer(address))
+                return false;
+
+            if (!chunkCheck)
+                address = MemObj.ReadAddress(address);
+
+            int nullCount = 0;
+
+            // Chunks array must have null pointers, if not then it's not valid
+            for (int i = 0; i < 50 && nullCount <= 3; i++)
+            {
+                // Read Chunk Address
+                var offset = i * PointerSize();
+                var chunkAddress = MemObj.ReadAddress(address + offset);
+                if (chunkAddress == IntPtr.Zero)
+                    ++nullCount;
+            }
+
+            if (nullCount <= 3)
+                return false;
+
+            // Read First FName Address
+            var noneFName = MemObj.ReadAddress(MemObj.ReadAddress(address));
+            if (!IsValidRemoteAddress(noneFName))
+                return false;
+
+            // Search for none FName
+            var pattern = PatternScanner.Parse("NoneSig", 0, "4E 6F 6E 65 00");
+            var result = PatternScanner.FindPattern(MemObj, noneFName, noneFName + 0x50, new List<PatternScanner.Pattern> { pattern }, true).Result;
+
+            return result["NoneSig"].Count > 0;
+        }
+        public static bool IsValidGNamesChunksAddress(IntPtr chunkPtr)
+        {
+            return IsValidGNamesAddress(chunkPtr, true);
+        }
+        public static int CalcNameOffset(IntPtr address)
+        {
+            long curAddress = address.ToInt64();
+            uint sizeOfStruct = (uint)Marshal.SizeOf<Win32.MemoryBasicInformation>();
+
+            while (
+                Win32.VirtualQueryEx(MemObj.ProcessHandle, (IntPtr)curAddress, out var info, sizeOfStruct) == sizeOfStruct &&
+                info.BaseAddress != (ulong)curAddress &&
+                curAddress >= address.ToInt64() - 0x10)
+            {
+                --curAddress;
+            }
+
+            return (int)(address.ToInt64() - curAddress);
+        }
+
         #endregion
 
         #region Process
@@ -138,9 +225,17 @@ namespace Unreal_Dumping_Agent.UtilsHelper
         public static bool UnrealEngineVersion(out string version)
         {
             version = null;
+            if (MemObj.TargetProcess == null)
+                throw new ArgumentException("init MemObj first.");
+            if (MemObj.TargetProcess.MainModule == null)
+                return false;
+
+            var fVersion = FileVersionInfo.GetVersionInfo(MemObj.TargetProcess.MainModule.FileName);
+            version = fVersion.ProductVersion;
+
             return true;
-            // File.GetAttributes()
         }
         #endregion
+
     }
 }

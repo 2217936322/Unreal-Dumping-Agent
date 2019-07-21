@@ -29,11 +29,6 @@ namespace Unreal_Dumping_Agent.Memory
             //TypeDifferent = 0x0000A,
             //TypeAll = 0xABCDEF
         }
-        public enum ScanMode
-        {
-            ScanFirst = 0xFF0,
-            ScanNext = 0x0FF
-        }
 
         private readonly Memory _memory;
 
@@ -42,7 +37,7 @@ namespace Unreal_Dumping_Agent.Memory
             _memory = mem;
         }
 
-        private Task<List<IntPtr>> ScanMemory<T>(T scanValue, ScanAlignment scanAlign, ScanType scanType, IntPtr beginAddress, IntPtr endAddress)
+        private Task<List<IntPtr>> ScanMemory(long scanValue, ScanAlignment scanAlign, ScanType scanType, IntPtr beginAddress, IntPtr endAddress)
         {
             const long chunk = 0x10000;
 
@@ -68,14 +63,16 @@ namespace Unreal_Dumping_Agent.Memory
 
                 // Scan
                 var lockObj = new object();
+                var bytesToCmp = BitConverter.GetBytes(scanValue);
+                var ret1 = ret;
                 Parallel.ForEach(memRegions, (memRegion, loopState) =>
                 {
-                    bool read = _memory.ReadBytes(memRegion.Key, (long)memRegion.Value.RegionSize, out var memoryBlock);
+                    var (address, memInfo) = memRegion;
+
+                    bool read = _memory.ReadBytes(address, (long)memInfo.RegionSize, out var memoryBlock);
                     if (!read)
                         return;
 
-                    // var bytes = new byte[Marshal.SizeOf(scanValue)];
-                    var bytesToCmp = (byte[]) BitConverter.GetBytes((dynamic) scanValue);
                     for (int scanIndex = 0; scanIndex < memoryBlock.Length; scanIndex++)
                     {
                         int k = 0;
@@ -94,19 +91,11 @@ namespace Unreal_Dumping_Agent.Memory
                                     // Did we find it?
                                     if (++k != bytesToCmp.Length) continue;
 
-                                    var curAddress = memRegion.Key + scanIndex * (int)scanAlign;
+                                    var curAddress = address + scanIndex * (int)scanAlign;
 
                                     lock (lockObj)
-                                        ret.Add(curAddress);
+                                        ret1.Add(curAddress);
                                 }
-
-                                //if (bytesToCmp.Equal(bytes))
-                                //{
-                                //    var curAddress = memRegion.Key + scanIndex * (int) scanAlign;
-
-                                //    lock (lockObj)
-                                //        ret.Add(curAddress);
-                                //}
                                 break;
                         }
                     }
@@ -116,7 +105,7 @@ namespace Unreal_Dumping_Agent.Memory
                 return ret;
             });
         }
-        private Task<List<IntPtr>> ScanModules<T>(T scanValue, ScanAlignment scanAlign, ScanType scanType)
+        private Task<List<IntPtr>> ScanModules(long scanValue, ScanAlignment scanAlign, ScanType scanType)
         {
             return Task.Run(async () => 
             {
@@ -140,13 +129,13 @@ namespace Unreal_Dumping_Agent.Memory
             });
         }
 
-        public Task<List<IntPtr>> Scan<T>(T scanValue, ScanAlignment scanAlign, ScanType scanType, IntPtr beginAddress, IntPtr endAddress)
+        public Task<List<IntPtr>> Scan(long scanValue, ScanAlignment scanAlign, ScanType scanType, IntPtr beginAddress, IntPtr endAddress)
         {
-            return ScanMemory(50, scanAlign, scanType, beginAddress, endAddress);
+            return ScanMemory(scanValue, scanAlign, scanType, beginAddress, endAddress);
         }
-        public Task<List<IntPtr>> Scan<T>(T scanValue, ScanAlignment scanAlign, ScanType scanType)
+        public Task<List<IntPtr>> Scan(long scanValue, ScanAlignment scanAlign, ScanType scanType)
         {
-            return Scan(scanValue, scanAlign, scanType, new IntPtr(0x0), new IntPtr(0x7fffffffffff));
+            return Scan(scanValue, scanAlign, scanType, new IntPtr(0x0), new IntPtr(_memory.Is64Bit ? 0x7fffffffffff : 0x7fffffff));
         }
     }
 }
