@@ -11,7 +11,7 @@ namespace Unreal_Dumping_Agent.Chat
     public class ChatManager
     {
         // Keys must be lower
-        private static readonly Dictionary<string, EQuestionTask> ChatTasks = new Dictionary<string, EQuestionTask>
+        private static readonly Dictionary<string, EQuestionTask> _chatTasks = new Dictionary<string, EQuestionTask>
         {
             { "gname", EQuestionTask.GNames },
             { "gnames", EQuestionTask.GNames },
@@ -35,7 +35,7 @@ namespace Unreal_Dumping_Agent.Chat
 
         private static IEnumerable<ChatQuestion> LoadData(string filePath)
         {
-            var trainingDataText = File.ReadAllLines(@"C:\Users\CorrM\Desktop\train.txt");
+            var trainingDataText = File.ReadAllLines(filePath);
 
             var ret = trainingDataText
                 .Where(s => !s.StartsWith("//") && !string.IsNullOrWhiteSpace(s))
@@ -47,11 +47,11 @@ namespace Unreal_Dumping_Agent.Chat
         }
         private static IEnumerable<ChatQuestion> LoadTrainData()
         {
-            return LoadData(@"C:\Users\CorrM\Desktop\train.txt");
+            return LoadData(Path.Combine(Environment.CurrentDirectory, "ML_Data", "learn.txt"));
         }
         private static IEnumerable<ChatQuestion> LoadTestData()
         {
-            return LoadData(@"C:\Users\CorrM\Desktop\test.txt");
+            return LoadData(Path.Combine(Environment.CurrentDirectory, "ML_Data", "test.txt"));
         }
 
         public Task Init()
@@ -120,9 +120,9 @@ namespace Unreal_Dumping_Agent.Chat
             ChatQuestion singleQuestion = new ChatQuestion() { QuestionText = question.ToLower() };
             foreach (var s in question.ToLower().Split(' '))
             {
-                if (!ChatTasks.ContainsKey(s)) continue;
+                if (!_chatTasks.ContainsKey(s)) continue;
 
-                singleQuestion.QuestionTask = (int)ChatTasks[s];
+                singleQuestion.QuestionTask = (int)_chatTasks[s];
                 break;
             }
 

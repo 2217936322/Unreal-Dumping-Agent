@@ -10,22 +10,22 @@ namespace Unreal_Dumping_Agent.Tools
 {
     public static class GNamesFinder
     {
-        private static readonly Pattern NoneSig         = Parse("None", 0, "4E 6F 6E 65 00");
-        private static readonly Pattern ByteSig         = Parse("Byte", 0, "42 79 74 65 50 72 6F 70 65 72 74 79 00");
-        private static readonly Pattern IntSig          = Parse("Int", 0, "49 6E 74 50 72 6F 70 65 72 74 79 00");
-        private static readonly Pattern MulticastSig    = Parse("MulticastDelegate", 0, "4D 75 6C 74 69 63 61 73 74 44 65 6C 65 67 61 74 65 50 72 6F 70 65 72 74 79");
+        private static readonly Pattern _noneSig         = Parse("None", 0, "4E 6F 6E 65 00");
+        private static readonly Pattern _byteSig         = Parse("Byte", 0, "42 79 74 65 50 72 6F 70 65 72 74 79 00");
+        private static readonly Pattern _intSig          = Parse("Int", 0, "49 6E 74 50 72 6F 70 65 72 74 79 00");
+        private static readonly Pattern _multicastSig    = Parse("MulticastDelegate", 0, "4D 75 6C 74 69 63 61 73 74 44 65 6C 65 67 61 74 65 50 72 6F 70 65 72 74 79");
 
         public static Task<List<IntPtr>> Find(Memory.Memory memory)
         {
             return Task.Run(async () =>
             {
                 var ret = new List<IntPtr>();
-                var result = await FindPattern(memory, new List<Pattern> { NoneSig, ByteSig, IntSig, MulticastSig });
+                var result = await FindPattern(memory, new List<Pattern> { _noneSig, _byteSig, _intSig, _multicastSig });
 
-                var noneR = result[NoneSig.Name];
-                var byteR = result[ByteSig.Name];
-                var intR = result[IntSig.Name];
-                var multicastR = result[MulticastSig.Name];
+                var noneR = result[_noneSig.Name];
+                var byteR = result[_byteSig.Name];
+                var intR = result[_intSig.Name];
+                var multicastR = result[_multicastSig.Name];
 
                 var cmp1 = GetNearNumbers(noneR, byteR, 0x150);
                 var cmp2 = GetNearNumbers(cmp1, intR, 0x150);

@@ -1,0 +1,55 @@
+﻿// QuestionType == None
+nothing||CorrM||0
+null||CorrM||0
+nil||CorrM||0
+
+// QuestionType == HiWelcome
+hi||CorrM||1
+hey||CorrM||1
+welcome||CorrM||1
+
+// QuestionType == Thanks
+ty||CorrM||2
+thank you||CorrM||2
+i love you||CorrM||2
+you are amazing||CorrM||2
+you are awesome||CorrM||2
+wow||CorrM||2
+
+// QuestionType == LifeAsk
+what you are doing||CorrM||3
+who are you||CorrM||3
+who you doing||CorrM||3
+what you can do||CorrM||3
+
+// QuestionType == Ask
+what can you do||CorrM||4
+what about you||CorrM||4
+
+// QuestionType == Funny
+noob||CorrM||5
+funny||CorrM||5
+
+// QuestionType == Find
+i need to find||CorrM||6
+find||CorrM||6
+search||CorrM||6
+look for||CorrM||6
+can you find||CorrM||6
+can i get||CorrM||6
+can you found for me||CorrM||6
+look for||CorrM||6
+give me||CorrM||6
+
+// QuestionType == LockProcess
+lock process||CorrM||7
+get my target||CorrM||7
+find my target||CorrM||7
+lock this||CorrM||7
+that's my target||CorrM||7
+take my target||CorrM||7
+lock for target||CorrM||7
+that's my process||CorrM||7
+my process||CorrM||7
+set my target||CorrM||7
+set my process||CorrM||7

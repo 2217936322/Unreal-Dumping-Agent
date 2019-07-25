@@ -145,7 +145,6 @@ namespace Unreal_Dumping_Agent.UtilsHelper
 
             return (int)(address.ToInt64() - curAddress);
         }
-
         #endregion
 
         #region Process

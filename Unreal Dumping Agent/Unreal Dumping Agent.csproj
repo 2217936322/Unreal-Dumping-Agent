@@ -36,6 +36,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="ML_Data\learn.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="ML_Data\learn.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Ceen.Httpd" Version="0.9.7" />
     <PackageReference Include="Ceen.Mvc" Version="0.9.7" />
     <PackageReference Include="Discord.Net" Version="2.1.1" />
