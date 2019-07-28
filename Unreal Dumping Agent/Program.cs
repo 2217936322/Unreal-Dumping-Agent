@@ -138,7 +138,7 @@ namespace Unreal_Dumping_Agent
             await ExecuteTasks(curUser, uTask, message, context);
         }
 
-        private async Task ExecuteTasks(UsersInfo curUser, QuestionPrediction uTask, SocketUserMessage messageParam, SocketCommandContext context)
+        private static async Task ExecuteTasks(UsersInfo curUser, QuestionPrediction uTask, SocketUserMessage messageParam, SocketCommandContext context)
         {
             // Lock process, auto detect process
             if (uTask.TypeEnum() == EQuestionType.LockProcess ||

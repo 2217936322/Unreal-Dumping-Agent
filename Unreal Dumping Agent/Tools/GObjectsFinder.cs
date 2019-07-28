@@ -97,6 +97,7 @@ namespace Unreal_Dumping_Agent.Tools
 
                 ret.AddRange(searchResult);
                 searchResult.Clear();
+                ret.Reverse();
             }
 
             return ret;
