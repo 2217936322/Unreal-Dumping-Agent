@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
+using Unreal_Dumping_Agent.Json;
 using Unreal_Dumping_Agent.Memory;
 
 namespace Unreal_Dumping_Agent.UtilsHelper
@@ -61,6 +63,32 @@ namespace Unreal_Dumping_Agent.UtilsHelper
             Console.WriteLine(message);
             Console.ResetColor();
         }
+        public static int GamePointerSize()
+        {
+            return MemObj.Is64Bit ? 0x8 : 0x4;
+        }
+        public static IntPtr GameStartAddress()
+        {
+            // Get System Info
+            Win32.GetSystemInfo(out var si);
+
+            return si.MinimumApplicationAddress;
+        }
+        public static IntPtr GameEndAddress()
+        {
+            // Get System Info
+            Win32.GetSystemInfo(out var si);
+
+            return si.MaximumApplicationAddress;
+        }
+        #endregion
+
+        #region Misc
+        public static bool IsNumber(string str, out int val, out bool isHex)
+        {
+            isHex = int.TryParse(str, NumberStyles.HexNumber, new NumberFormatInfo(), out val);
+            return isHex || int.TryParse(str, out val);
+        }
         #endregion
 
         #region Address Stuff
@@ -81,12 +109,13 @@ namespace Unreal_Dumping_Agent.UtilsHelper
 
             return false;
         }
-        public static bool IsValidRemotePointer(IntPtr address)
+        public static bool IsValidRemotePointer(IntPtr pointer, out IntPtr address)
         {
-            if (MemObj == null || address == IntPtr.Zero || address.ToInt64() < 0)
+            address = IntPtr.Zero;
+            if (MemObj == null || pointer == IntPtr.Zero || pointer.ToInt64() < 0)
                 return false;
 
-            address = MemObj.ReadAddress(address);
+            address = MemObj.ReadAddress(pointer);
             return IsValidRemoteAddress(address);
         }
         public static bool IsValidGNamesAddress(IntPtr address, bool chunkCheck = false)
@@ -94,7 +123,7 @@ namespace Unreal_Dumping_Agent.UtilsHelper
             if (MemObj == null || !IsValidRemoteAddress(address))
                 return false;
 
-            if (!chunkCheck && !IsValidRemotePointer(address))
+            if (!chunkCheck && !IsValidRemotePointer(address, out _))
                 return false;
 
             if (!chunkCheck)
@@ -144,6 +173,70 @@ namespace Unreal_Dumping_Agent.UtilsHelper
             }
 
             return (int)(address.ToInt64() - curAddress);
+        }
+        public static bool IsValidGObjectsAddress(IntPtr address)
+        {
+            if (JsonReflector.StructsList.Count == 0)
+                throw new NullReferenceException("You must init `JsonReflector` first.");
+
+            // => Get information
+            var objectItem = JsonReflector.GetStruct("FUObjectItem");
+            var objectItemSize = objectItem.GetSize();
+
+            var objectInfo = JsonReflector.GetStruct("UObject");
+            var objOuter = objectInfo["Outer"].Offset;
+            var objInternalIndex = objectInfo["InternalIndex"].Offset;
+            var objNameIndex = objectInfo["Name"].Offset;
+            // => Get information
+
+	        IntPtr addressHolder = address;
+            if (MemObj == null)
+                throw new NullReferenceException("`MemObj` is null !!");
+
+            if (!IsValidRemoteAddress(addressHolder))
+                return false;
+
+            /*
+	        * NOTE:
+	        * Nested loops will be slow, split-ed best.
+	        */
+            const int objCount = 2;
+            var objects = new IntPtr[objCount];
+            var vTables = new IntPtr[objCount];
+
+            // Check (UObject*) Is Valid Pointer
+            for (int i = 0; i < objCount; i++)
+            {
+                int offset = objectItemSize * i;
+                if (!IsValidRemotePointer(addressHolder + offset, out objects[i]))
+                    return false;
+            }
+
+	        // Check (VTable) Is Valid Pointer
+            for (int i = 0; i < objCount; i++)
+            {
+                if (!IsValidRemotePointer(objects[i], out vTables[i]))
+                    return false;
+            }
+
+            // Check (InternalIndex) Is Valid
+            for (int i = 0; i < objCount; i++)
+            {
+                int internalIndex = MemObj.Rpm<int>(objects[i] + objInternalIndex);
+                if (internalIndex != i)
+                    return false;
+            }
+
+            // Check (Outer) Is Valid
+            // first object must have Outer == nullptr(0x0000000000)
+            int uOuter = MemObj.Rpm<int>(objects[0] + objOuter);
+            if (uOuter != 0)
+                return false;
+
+            // Check (FName_index) Is Valid
+            // 2nd object must have FName_index == 100
+            int uFNameIndex = MemObj.Rpm<int>(objects[1] + objNameIndex);
+            return uFNameIndex == 100;
         }
         #endregion
 
