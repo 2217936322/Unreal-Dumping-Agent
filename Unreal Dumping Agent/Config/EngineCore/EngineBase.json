@@ -125,7 +125,7 @@
         { "Children": "UField*" },
         { "PropertySize": "int" },
         { "MinAlignment": "int" },
-        { "pad_1": "64" }
+        { "pad": "64" }
       ],
       "note": ""
     },
@@ -146,7 +146,7 @@
         { "FunctionFlags": "int32" },
         { "RepOffset": "int16" },
         { "NumParms": "int8" },
-        { "pad_1": "1" },
+        { "pad": "1" },
         { "ParmsSize": "int16" },
         { "ReturnValueOffset": "uint16" },
         { "RPCId": "uint16" },
@@ -154,7 +154,7 @@
         { "FirstPropertyToInit": "UProperty*" },
         { "EventGraphFunction": "UFunction*" },
         { "EventGraphCallOffset": "int" },
-        { "pad_2": "4" },
+        { "pad": "4" },
         { "Func": "*" }
       ],
       "note": ""
@@ -163,7 +163,7 @@
       "name": "UClass",
       "super": "UStruct",
       "vars": [
-        { "pad_1": "408" }
+        { "pad": "408" }
       ],
       "note": ""
     },
@@ -176,7 +176,7 @@
         { "PropertyFlags": "FQWord" },
         { "RepIndex": "uint16" },
         { "BlueprintReplicationCondition": "uint8" },
-        { "pad_1": "uint8" },
+        { "pad": "uint8" },
         { "Offset": "int" },
         { "RepNotifyFunc": "FName" },
         { "PropertyLinkNext": "*" },

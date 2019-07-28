@@ -152,21 +152,24 @@ namespace Unreal_Dumping_Agent.Json
 
                 // Init vars
                 {
-                    var sVars = structObj["vars"].ToList();
-                    foreach (var sVar in sVars)
+                    var sVars = structObj["vars"];
+                    foreach (var sVar in sVars.Children<JObject>().Properties())
                     {
-                        JProperty jProperty = sVar.ToObject<JProperty>();
+                        string sName = sVar.Name.Replace("pad",  $"pad_{Utils.RandomString(2)}");
 
                         var jVar = new JsonVar(
-                            jProperty.Name,
-                            jProperty.Value.ToString(),
+                            sName,
+                            sVar.Value.ToString(),
                             offset,
-                            IsStructType(jProperty.Value.ToString()),
+                            IsStructType(sVar.Value.ToString()),
                             false);
 
-                        ret.Vars.Add(jProperty.Name, jVar);
+                        ret.Vars.Add(sName, jVar);
                         offset += jVar.Size;
-                        structSize += jProperty.Value<int>();
+
+                        structSize += Utils.IsNumber(sVar.Value.ToString()) 
+                            ? int.Parse(sVar.Value.ToString()) 
+                            : VarSizeFromName(sVar.Value.ToString());
                     }
                 }
 
@@ -216,6 +219,11 @@ namespace Unreal_Dumping_Agent.Json
 
         // Variables inside this struct
         public JsonVariables Vars { get; set; }
+
+        public JsonStruct()
+        {
+            Vars = new JsonVariables();
+        }
 
         // Get unneeded size to sub from the struct size
         private int GetUnneededSize()

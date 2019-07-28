@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using Unreal_Dumping_Agent.Json;
@@ -12,6 +13,8 @@ namespace Unreal_Dumping_Agent.UtilsHelper
 {
     public static class Utils
     {
+        private static readonly Random _random = new Random();
+
         public const string Version = "1.0.0";
         public const string Title = "Welcome Agent";
         public const string UnrealWindowClass = "UnrealWindow";
@@ -84,10 +87,24 @@ namespace Unreal_Dumping_Agent.UtilsHelper
         #endregion
 
         #region Misc
+        public static string RandomString(int length)
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            return new string(Enumerable.Repeat(chars, length)
+                .Select(s => s[_random.Next(s.Length)]).ToArray());
+        }
         public static bool IsNumber(string str, out int val, out bool isHex)
         {
             isHex = int.TryParse(str, NumberStyles.HexNumber, new NumberFormatInfo(), out val);
             return isHex || int.TryParse(str, out val);
+        }
+        public static bool IsNumber(string str, out int val)
+        {
+            return IsNumber(str, out val, out _);
+        }
+        public static bool IsNumber(string str)
+        {
+            return IsNumber(str, out _, out _);
         }
         #endregion
 

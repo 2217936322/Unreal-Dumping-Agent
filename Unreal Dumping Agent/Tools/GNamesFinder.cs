@@ -15,12 +15,12 @@ namespace Unreal_Dumping_Agent.Tools
         private static readonly Pattern _intSig          = Parse("Int", 0, "49 6E 74 50 72 6F 70 65 72 74 79 00");
         private static readonly Pattern _multicastSig    = Parse("MulticastDelegate", 0, "4D 75 6C 74 69 63 61 73 74 44 65 6C 65 67 61 74 65 50 72 6F 70 65 72 74 79");
 
-        public static Task<List<IntPtr>> Find(Memory.Memory memory)
+        public static Task<List<IntPtr>> Find()
         {
             return Task.Run(async () =>
             {
                 var ret = new List<IntPtr>();
-                var result = await FindPattern(memory, new List<Pattern> { _noneSig, _byteSig, _intSig, _multicastSig });
+                var result = await FindPattern(Utils.MemObj, new List<Pattern> { _noneSig, _byteSig, _intSig, _multicastSig });
 
                 var noneR = result[_noneSig.Name];
                 var byteR = result[_byteSig.Name];
