@@ -15,6 +15,7 @@ using Unreal_Dumping_Agent.Http;
 using Unreal_Dumping_Agent.Json;
 using Unreal_Dumping_Agent.Memory;
 using Unreal_Dumping_Agent.Tools;
+using Unreal_Dumping_Agent.Tools.SdkGen;
 using Unreal_Dumping_Agent.UtilsHelper;
 
 namespace Unreal_Dumping_Agent
@@ -44,7 +45,8 @@ namespace Unreal_Dumping_Agent
             Utils.MemObj = new Memory.Memory(Utils.DetectUnrealGame());
             Utils.ScanObj = new Scanner(Utils.MemObj);
 
-            //Utils.UnrealEngineVersion(out string ueVersion);
+            var fPointer = new EngineClasses.FPointer { Dummy = (IntPtr)0x1121314151617181, gg = 55, Dummy2 = (IntPtr)0x1121314151617181 };
+            fPointer.FixPointers();
 
             //JsonReflector.LoadJsonEngine("EngineBase");
             //var ss = JsonReflector.StructsList;
@@ -54,11 +56,15 @@ namespace Unreal_Dumping_Agent
             //var pat = PatternScanner.Parse("None", 0, "4E 6F 6E 65 00", 0xFF);
             //var gg = await PatternScanner.FindPattern(Utils.MemObj, new List<PatternScanner.Pattern>() { pat });
 
-            Console.WriteLine("");
+            Console.WriteLine(fPointer.Dummy.ToInt32());
+            Console.WriteLine(fPointer.Dummy2.ToInt32());
         }
 
         private async Task MainAsync()
         {
+            await Test();
+            return;
+
             // Init
             Utils.BotWorkType = Utils.BotType.Local;
             var initChat = _chatManager.Init();

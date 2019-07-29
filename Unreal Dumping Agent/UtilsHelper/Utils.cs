@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using Unreal_Dumping_Agent.Json;
@@ -32,6 +34,31 @@ namespace Unreal_Dumping_Agent.UtilsHelper
         {
             public IntPtr Address;
             public long RegionSize;
+        }
+
+        public static byte[] StructToBytes<T>(T structBase) where T : struct
+        {
+            int size = Marshal.SizeOf(structBase);
+            var arr = new byte[size];
+
+            IntPtr ptr = Marshal.AllocHGlobal(size);
+            Marshal.StructureToPtr(structBase, ptr, true);
+            Marshal.Copy(ptr, arr, 0, size);
+            Marshal.FreeHGlobal(ptr);
+            return arr;
+        }
+        public static T BytesToStruct<T>(byte[] structBytes) where T : struct
+        {
+            var ret = new T();
+            int size = Marshal.SizeOf(ret);
+            IntPtr ptr = Marshal.AllocHGlobal(size);
+
+            Marshal.Copy(structBytes, 0, ptr, size);
+
+            ret = Marshal.PtrToStructure<T>(ptr);
+            Marshal.FreeHGlobal(ptr);
+
+            return ret;
         }
         #endregion
 
@@ -105,6 +132,41 @@ namespace Unreal_Dumping_Agent.UtilsHelper
         public static bool IsNumber(string str)
         {
             return IsNumber(str, out _, out _);
+        }
+        #endregion
+
+        #region FixPointers
+        public static void FixPointers<T>(ref T structBase) where T : struct
+        {
+            if (ProgramIs64() && MemObj.Is64Bit)
+                return;
+
+            var structBytes = StructToBytes(structBase);
+            var varsOffset = structBase.GetType().GetFields()
+                .Where(field => field.FieldType == typeof(IntPtr))
+                .Select(field => Marshal.OffsetOf<T>(field.Name).ToInt32());
+
+            foreach (var i in varsOffset)
+                FixStructPointer(ref structBytes, i);
+
+            structBase = BytesToStruct<T>(structBytes);
+        }
+        private static void FixStructPointer(ref byte[] structBase, int varOffset)
+        {
+            if (ProgramIs64() && MemObj.Is64Bit)
+                throw new Exception("FixStructPointer only work for 32bit games with 64bit tool version.");
+
+            int structSize = structBase.Length;
+            int srcSize = Math.Abs(varOffset - structSize) - 0x4;
+
+            int src = varOffset;
+            int dest = src + 0x4;
+
+            Array.Copy(structBase, src, structBase, dest, srcSize);
+            structBase[dest + 0] = 0;
+            structBase[dest + 1] = 0;
+            structBase[dest + 2] = 0;
+            structBase[dest + 3] = 0;
         }
         #endregion
 
@@ -344,6 +406,5 @@ namespace Unreal_Dumping_Agent.UtilsHelper
             return true;
         }
         #endregion
-
     }
 }
