@@ -31,25 +31,25 @@ noob||CorrM||5
 funny||CorrM||5
 
 // QuestionType == Find
-i need to find||CorrM||6
-find||CorrM||6
-search||CorrM||6
-look for||CorrM||6
-can you find||CorrM||6
-can i get||CorrM||6
-can you found for me||CorrM||6
-look for||CorrM||6
-give me||CorrM||6
+i need to find||CorrM||101
+find||CorrM||101
+search||CorrM||101
+look for||CorrM||101
+can you find||CorrM||101
+can i get||CorrM||101
+can you found for me||CorrM||101
+look for||CorrM||101
+give me||CorrM||101
 
 // QuestionType == LockProcess
-lock process||CorrM||7
-get my target||CorrM||7
-find my target||CorrM||7
-lock this||CorrM||7
-that's my target||CorrM||7
-take my target||CorrM||7
-lock for target||CorrM||7
-that's my process||CorrM||7
-my process||CorrM||7
-set my target||CorrM||7
-set my process||CorrM||7
+lock process||CorrM||102
+get my target||CorrM||102
+find my target||CorrM||102
+lock this||CorrM||102
+that's my target||CorrM||102
+take my target||CorrM||102
+lock for target||CorrM||102
+that's my process||CorrM||102
+my process||CorrM||102
+set my target||CorrM||102
+set my process||CorrM||102

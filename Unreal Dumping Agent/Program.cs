@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -43,9 +44,11 @@ namespace Unreal_Dumping_Agent
             Utils.MemObj = new Memory.Memory(Utils.DetectUnrealGame());
             Utils.ScanObj = new Scanner(Utils.MemObj);
 
-            JsonReflector.LoadJsonEngine("EngineBase");
-            var ss = JsonReflector.StructsList;
-            var gg = await GObjectsFinder.Find();
+            Utils.UnrealEngineVersion(out string ueVersion);
+
+            //JsonReflector.LoadJsonEngine("EngineBase");
+            //var ss = JsonReflector.StructsList;
+            //var gg = await GObjectsFinder.Find();
             //var gg = await GNamesFinder.Find();
             //var gg = await new Scanner(Utils.MemObj).Scan(50, Scanner.ScanAlignment.Alignment4Bytes, Scanner.ScanType.TypeExact);
             //var pat = PatternScanner.Parse("None", 0, "4E 6F 6E 65 00", 0xFF);
@@ -56,11 +59,6 @@ namespace Unreal_Dumping_Agent
 
         private async Task MainAsync()
         {
-            // TEST
-            await Test();
-
-            return;
-
             // Init
             Utils.BotWorkType = Utils.BotType.Local;
             var initChat = _chatManager.Init();
@@ -162,7 +160,38 @@ namespace Unreal_Dumping_Agent
 
                 // Setup Memory
                 Utils.MemObj = new Memory.Memory(processId);
+                Utils.ScanObj = new Memory.Scanner(Utils.MemObj);
 
+                // Get Game Unreal Version
+                if (!Utils.UnrealEngineVersion(out string ueVersion) || string.IsNullOrWhiteSpace(ueVersion))
+                    ueVersion = "Can't Detected";
+
+                // Load Engine File
+                // TODO: Make engine name dynamically stetted by user 
+                string corePath = Path.Combine(Environment.CurrentDirectory, "Config", "EngineCore");
+                var filesName = Directory.EnumerateFiles(corePath).Select(Path.GetFileName).ToList();
+                if (!filesName.Contains($"{ueVersion}.json"))
+                {
+                    if (ueVersion != "Can't Detected")
+                        await context.User.SendMessageAsync($"Can't found core engine called `{ueVersion}.json`.\nSo i will use `EngineBase.json`");
+                    ueVersion = "EngineBase";
+                }
+                JsonReflector.LoadJsonEngine(ueVersion);
+
+                var emb = new EmbedBuilder
+                {
+                    Color = Color.Green,
+                    Title = "Target Info",
+                    Description = "**Information** about your __target__.",
+                };
+                emb.WithFooter("Donate to keep me working :)");
+
+                emb.AddField("Window Name", Utils.MemObj.TargetProcess.MainWindowTitle);
+                emb.AddField("Exe Name", Path.GetFileName(Utils.MemObj.TargetProcess.MainModule?.FileName));
+                emb.AddField("Unreal Version", ueVersion);
+                emb.AddField("Game Architecture", Utils.MemObj.Is64Bit ? "64Bit" : "32bit");
+
+                await context.User.SendMessageAsync(embed: emb.Build());
             }
             // Finder
             else if (uTask.TypeEnum() == EQuestionType.Find)
@@ -176,16 +205,47 @@ namespace Unreal_Dumping_Agent
                     curUser.LastOrder = UserOrder.GetProcess;
                     return;
                 }
+                if (uTask.TaskEnum() == EQuestionTask.None)
+                {
+                    await context.User.SendMessageAsync(DiscordText.GetRandomNotUnderstandString());
+                    return;
+                }
+
+                var lastMessage = await context.User.SendMessageAsync($":white_check_mark: Working on that.");
 
                 // Do work
+                var finderResult = new List<IntPtr>();
                 switch (uTask.TaskEnum())
                 {
                     case EQuestionTask.GNames:
-
+                        finderResult = await GNamesFinder.Find();
                         break;
                     case EQuestionTask.GObject:
+                        finderResult = await GObjectsFinder.Find();
                         break;
                 }
+
+                if (finderResult.Count == 0)
+                {
+                    await lastMessage.ModifyAsync(msg => msg.Content = ":x: Can't found any thing !!");
+                    return;
+                }
+
+                var emb = new EmbedBuilder
+                {
+                    Color = Color.Green,
+                    Title = $"Finder Result ({uTask.TaskEnum():G})",
+                    Description = "That's what i found for you :-\n\n",
+                };
+                emb.WithFooter("Donate to keep me working :)");
+                for (int i = 0; i < finderResult.Count; i++)
+                    emb.Description += $"{i}) `0x{finderResult[i].ToInt64():X}`.\n";
+
+                await lastMessage.ModifyAsync(msg =>
+                {
+                    msg.Content = string.Empty;
+                    msg.Embed = emb.Build();
+                });
             }
         }
     }

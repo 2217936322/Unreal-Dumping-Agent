@@ -334,14 +334,13 @@ namespace Unreal_Dumping_Agent.UtilsHelper
         public static bool UnrealEngineVersion(out string version)
         {
             version = null;
-            if (MemObj.TargetProcess == null)
+            if (MemObj?.TargetProcess == null)
                 throw new ArgumentException("init MemObj first.");
             if (MemObj.TargetProcess.MainModule == null)
                 return false;
 
-            var fVersion = FileVersionInfo.GetVersionInfo(MemObj.TargetProcess.MainModule.FileName);
-            version = fVersion.ProductVersion;
-
+            var fvi = FileVersionInfo.GetVersionInfo(MemObj.TargetProcess.MainModule.FileName);
+            version = string.Concat(fvi.ProductMajorPart.ToString(), ".", fvi.ProductMinorPart.ToString(), ".", fvi.ProductBuildPart.ToString());
             return true;
         }
         #endregion
