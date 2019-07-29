@@ -10,6 +10,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using Unreal_Dumping_Agent.Json;
 using Unreal_Dumping_Agent.Memory;
+using Unreal_Dumping_Agent.Tools.SdkGen;
 
 namespace Unreal_Dumping_Agent.UtilsHelper
 {
@@ -36,7 +37,7 @@ namespace Unreal_Dumping_Agent.UtilsHelper
             public long RegionSize;
         }
 
-        public static byte[] StructToBytes<T>(T structBase) where T : struct
+        public static byte[] StructToBytes<T>(T structBase) where T : class
         {
             int size = Marshal.SizeOf(structBase);
             var arr = new byte[size];
@@ -47,7 +48,7 @@ namespace Unreal_Dumping_Agent.UtilsHelper
             Marshal.FreeHGlobal(ptr);
             return arr;
         }
-        public static T BytesToStruct<T>(byte[] structBytes) where T : struct
+        public static T BytesToStruct<T>(byte[] structBytes) where T : class, new()
         {
             var ret = new T();
             int size = Marshal.SizeOf(ret);
@@ -136,10 +137,10 @@ namespace Unreal_Dumping_Agent.UtilsHelper
         #endregion
 
         #region FixPointers
-        public static void FixPointers<T>(ref T structBase) where T : struct
+        public static void FixPointers<T>(T structBase) where T : class, new()
         {
-            if (ProgramIs64() && MemObj.Is64Bit)
-                return;
+            //if (ProgramIs64() && MemObj.Is64Bit)
+            //    return;
 
             var structBytes = StructToBytes(structBase);
             var varsOffset = structBase.GetType().GetFields()
@@ -149,12 +150,16 @@ namespace Unreal_Dumping_Agent.UtilsHelper
             foreach (var i in varsOffset)
                 FixStructPointer(ref structBytes, i);
 
-            structBase = BytesToStruct<T>(structBytes);
+            var newStruct = BytesToStruct<T>(structBytes);
+
+            // Set Fields
+            foreach (var field in structBase.GetType().GetFields())
+                field.SetValue(structBase, field.GetValue(newStruct));
         }
         private static void FixStructPointer(ref byte[] structBase, int varOffset)
         {
-            if (ProgramIs64() && MemObj.Is64Bit)
-                throw new Exception("FixStructPointer only work for 32bit games with 64bit tool version.");
+            //if (ProgramIs64() && MemObj.Is64Bit)
+            //    throw new Exception("FixStructPointer only work for 32bit games with 64bit tool version.");
 
             int structSize = structBase.Length;
             int srcSize = Math.Abs(varOffset - structSize) - 0x4;

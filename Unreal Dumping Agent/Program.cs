@@ -45,7 +45,7 @@ namespace Unreal_Dumping_Agent
             Utils.MemObj = new Memory.Memory(Utils.DetectUnrealGame());
             Utils.ScanObj = new Scanner(Utils.MemObj);
 
-            var fPointer = new EngineClasses.FPointer { Dummy = (IntPtr)0x1121314151617181, gg = 55, Dummy2 = (IntPtr)0x1121314151617181 };
+            var fPointer = new EngineClasses.FPointer() { Dummy = (IntPtr)0x1121314151617181 };
             fPointer.FixPointers();
 
             //JsonReflector.LoadJsonEngine("EngineBase");
@@ -57,7 +57,6 @@ namespace Unreal_Dumping_Agent
             //var gg = await PatternScanner.FindPattern(Utils.MemObj, new List<PatternScanner.Pattern>() { pat });
 
             Console.WriteLine(fPointer.Dummy.ToInt32());
-            Console.WriteLine(fPointer.Dummy2.ToInt32());
         }
 
         private async Task MainAsync()
