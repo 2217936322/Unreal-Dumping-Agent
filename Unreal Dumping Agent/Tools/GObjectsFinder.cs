@@ -8,9 +8,9 @@ using Unreal_Dumping_Agent.UtilsHelper;
 
 namespace Unreal_Dumping_Agent.Tools
 {
-    public class GObjectsFinder
+    public static class GObjectsFinder
     {
-        public static async Task<List<IntPtr>> Find()
+        public static async Task<List<IntPtr>> Find(AgentRequestInfo requestInfo)
         {
             var ret = new List<IntPtr>();
             var memRegions = new List<Utils.MemoryRegion>();

@@ -44,7 +44,7 @@ namespace Unreal_Dumping_Agent
             Utils.MemObj = new Memory.Memory(Utils.DetectUnrealGame());
             Utils.ScanObj = new Scanner(Utils.MemObj);
 
-            Utils.UnrealEngineVersion(out string ueVersion);
+            //Utils.UnrealEngineVersion(out string ueVersion);
 
             //JsonReflector.LoadJsonEngine("EngineBase");
             //var ss = JsonReflector.StructsList;
@@ -138,6 +138,13 @@ namespace Unreal_Dumping_Agent
 
         private static async Task ExecuteTasks(UsersInfo curUser, QuestionPrediction uTask, SocketUserMessage messageParam, SocketCommandContext context)
         {
+            var requestInfo = new AgentRequestInfo()
+            {
+                User = curUser,
+                SocketMessage = messageParam,
+                Context = context
+            };
+
             // Lock process, auto detect process
             if (uTask.TypeEnum() == EQuestionType.LockProcess ||
                 uTask.TypeEnum() == EQuestionType.Find && uTask.TaskEnum() == EQuestionTask.Process)
@@ -193,6 +200,7 @@ namespace Unreal_Dumping_Agent
 
                 await context.User.SendMessageAsync(embed: emb.Build());
             }
+
             // Finder
             else if (uTask.TypeEnum() == EQuestionType.Find)
             {
@@ -218,10 +226,10 @@ namespace Unreal_Dumping_Agent
                 switch (uTask.TaskEnum())
                 {
                     case EQuestionTask.GNames:
-                        finderResult = await GNamesFinder.Find();
+                        finderResult = await GNamesFinder.Find(requestInfo);
                         break;
                     case EQuestionTask.GObject:
-                        finderResult = await GObjectsFinder.Find();
+                        finderResult = await GObjectsFinder.Find(requestInfo);
                         break;
                 }
 
