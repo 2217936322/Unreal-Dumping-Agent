@@ -12,7 +12,7 @@ namespace Unreal_Dumping_Agent.Memory
         public class StructAllocer<TStruct> : IDisposable
         {
             public IntPtr Ptr { get; private set; }
-            public TStruct ManageStruct { get; private set; }
+            public TStruct ManagedStruct { get; private set; }
 
             public StructAllocer()
             {
@@ -35,7 +35,7 @@ namespace Unreal_Dumping_Agent.Memory
                 if (Ptr == IntPtr.Zero)
                     return false;
 
-                ManageStruct = Marshal.PtrToStructure<TStruct>(Ptr);
+                ManagedStruct = Marshal.PtrToStructure<TStruct>(Ptr);
                 return true;
             }
 
@@ -144,12 +144,10 @@ namespace Unreal_Dumping_Agent.Memory
             }
             return stuff;
         }
-
-        public static T ToStructure<T>(this byte[] bytes)
+        public static T ToStructure<T>(this byte[] bytes) where T : struct
         {
             return (T)ToStructure(bytes, typeof(T));
         }
-
         public static T ToClass<T>(this byte[] bytes) where T : class
         {
             T stuff;
@@ -177,7 +175,6 @@ namespace Unreal_Dumping_Agent.Memory
                 return ms.ToArray();
             }
         }
-
         public static T FromByteArray<T>(this byte[] data)
         {
             if (data == null)

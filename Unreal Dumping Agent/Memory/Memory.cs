@@ -137,6 +137,13 @@ namespace Unreal_Dumping_Agent.Memory
             return ReadString(ReadAddress(lpBaseAddress), isUnicode);
         }
 
+        /// <summary>
+        /// Read memory range depended on type of <see cref="refStruct"/>
+        /// </summary>
+        /// <typeparam name="T">Type to read</typeparam>
+        /// <param name="refStruct">Var or struct to set read data on</param>
+        /// <param name="lpBaseAddress">Data address on remote process</param>
+        /// <returns></returns>
         public bool Read<T>(ref T refStruct, IntPtr lpBaseAddress) where T : struct
         {
             if (!ReadBytes(lpBaseAddress, Marshal.SizeOf<T>(), out var buffer))
@@ -188,6 +195,13 @@ namespace Unreal_Dumping_Agent.Memory
             var ret = new T();
             return !ReadClass(ret, lpBaseAddress, jsonMemoryOnly) ? null : ret;
         }
+        public T RpmClassPointer<T>(IntPtr lpBaseAddress) where T : class, new()
+        {
+            var ret = new T();
+            ReadClass(ret, ReadAddress(lpBaseAddress));
+
+            return ret;
+        }
 
         /// <summary>
         /// Read memory as <see cref="JsonStruct"/> and cast to class
@@ -218,14 +232,6 @@ namespace Unreal_Dumping_Agent.Memory
 
             return true;
         }
-        public T RpmClassPointer<T>(IntPtr lpBaseAddress) where T : class, new()
-        {
-            var ret = new T();
-            ReadClass(ret, ReadAddress(lpBaseAddress));
-
-            return ret;
-        }
-
         public T ReadJsonClass<T>(IntPtr lpBaseAddress, JsonStruct jsonStruct) where T : class, new()
         {
             var ret = new T();
@@ -271,7 +277,7 @@ namespace Unreal_Dumping_Agent.Memory
                 return false;
 
             sectionInformation.Update();
-            string deviceName = sectionInformation.ManageStruct.SzData;
+            string deviceName = sectionInformation.ManagedStruct.SzData;
             string filePath = deviceName;
             for (int i = 0; i < 3; i++)
                 filePath = filePath.Substring(filePath.IndexOf('\\') + 1);

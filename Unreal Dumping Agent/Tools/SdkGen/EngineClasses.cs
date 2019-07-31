@@ -1,68 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading.Tasks;
 using Unreal_Dumping_Agent.Json;
 using Utils = Unreal_Dumping_Agent.UtilsHelper.Utils;
 
 namespace Unreal_Dumping_Agent.Tools.SdkGen
 {
-    /// <summary>
-    /// Attribute to make read <see cref="JsonStruct"/> easy. (It's for fields only)
-    /// <para>field name must equal <see cref="JsonVar"/> on <see cref="JsonStruct"/></para>
-    /// </summary>
-    [AttributeUsage(AttributeTargets.Field)]
-    public class UnrealMemoryVar : System.Attribute
-    {
-        public static bool HasAttribute<T>() => GetCustomAttributes(typeof(T)).Any(a => a is UnrealMemoryVar);
-        public static bool HasAttribute(FieldInfo fi) => fi.GetCustomAttributes().Any(a => a is UnrealMemoryVar);
-    }
-    public interface IEngineStruct
-    {
-        /// <summary>
-        /// Check if object was init, (aka data was read).
-        /// </summary>
-        bool Init { get; }
-
-        /// <summary>
-        ///  Address of object on Remote process
-        /// </summary>
-        IntPtr ObjAddress { get; }
-
-        /// <summary>
-        /// Get object type name
-        /// </summary>
-        string TypeName { get; }
-
-        /// <summary>
-        /// Get JsonStruct of this class
-        /// </summary>
-        JsonStruct JsonType { get; }
-
-
-        /// <summary>
-        /// Fix pointers for 32bit games on 64bit tool
-        /// </summary>
-        Task FixPointers();
-
-        /// <summary>
-        /// Read Object data from remote process
-        /// </summary>
-        /// <param name="address">Address of target on remote process</param>
-        /// <returns>if success will return true</returns>
-        Task<bool> ReadData(IntPtr address);
-
-        /// <summary>
-        /// Read Object data from remote process
-        /// <para>Using <see cref="ObjAddress"/> as data address</para>
-        /// </summary>
-        /// <returns>if success will return true</returns>
-        Task<bool> ReadData();
-    }
-
     public static class EngineClasses
     {
         #region BasicStructs
@@ -313,8 +256,8 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
         // ReSharper disable once InconsistentNaming
         public class UObject : IEngineStruct
         {
-            public bool Init { get; private set; }
-            public IntPtr ObjAddress { get; private set; }
+            public bool Init { get; protected set; }
+            public IntPtr ObjAddress { get; protected set; }
 
             [UnrealMemoryVar]
             public IntPtr VfTable;
@@ -329,11 +272,12 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
             [UnrealMemoryVar]
             public IntPtr Outer;
 
-            public string TypeName => GetType().Name;
+            public virtual string TypeName => GetType().Name;
             public JsonStruct JsonType => JsonReflector.GetStruct(TypeName);
+
             public Task FixPointers() => Task.Run(() => Utils.FixPointers(this));
 
-            public async Task<bool> ReadData(IntPtr address)
+            public virtual async Task<bool> ReadData(IntPtr address)
             {
                 if (address == IntPtr.Zero)
                     throw new ArgumentNullException($"`address` can't equal null !!");
@@ -351,8 +295,316 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
                 await FixPointers();
                 return true;
             }
-            public async Task<bool> ReadData() => await ReadData(ObjAddress);
+            public virtual async Task<bool> ReadData() => await ReadData(ObjAddress);
         }
 
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        // ReSharper disable once InconsistentNaming
+        public class UField : UObject
+        {
+            [UnrealMemoryVar]
+            public IntPtr Next;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        // ReSharper disable once InconsistentNaming
+        public class UEnum : UField
+        {
+            [UnrealMemoryVar]
+            public FString CppType;
+            [UnrealMemoryVar]
+            public TArray Names;
+            [UnrealMemoryVar]
+            public long CppForm;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        // ReSharper disable once InconsistentNaming
+        public class UStruct : UField
+        {
+            [UnrealMemoryVar]
+            public IntPtr SuperField;
+            [UnrealMemoryVar]
+            public IntPtr Children;
+            [UnrealMemoryVar]
+            public int PropertySize;
+            [UnrealMemoryVar]
+            public int MinAlignment;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        // ReSharper disable once InconsistentNaming
+        public class UScriptStruct : UStruct
+        {
+            
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        // ReSharper disable once InconsistentNaming
+        public class UFunction : UStruct
+        {
+            [UnrealMemoryVar]
+            public int FunctionFlags;
+            [UnrealMemoryVar]
+            public IntPtr FirstPropertyToInit;
+            [UnrealMemoryVar]
+            public IntPtr EventGraphFunction;
+            [UnrealMemoryVar]
+            public IntPtr Func;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        // ReSharper disable once InconsistentNaming
+        public class UClass : UStruct
+        {
+            
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        // ReSharper disable once InconsistentNaming
+        public class UProperty : UField
+        {
+            [UnrealMemoryVar]
+            public int ArrayDim;
+            [UnrealMemoryVar]
+            public int ElementSize;
+            [UnrealMemoryVar]
+            public FQWord PropertyFlags;
+            [UnrealMemoryVar]
+            public int Offset;
+            [UnrealMemoryVar]
+            public IntPtr PropertyLinkNext;
+            [UnrealMemoryVar]
+            public IntPtr NextRef;
+            [UnrealMemoryVar]
+            public IntPtr DestructorLinkNext;
+            [UnrealMemoryVar]
+            public IntPtr PostConstructLinkNext;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        // ReSharper disable once InconsistentNaming
+        public class UNumericProperty : UProperty
+        {
+
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        // ReSharper disable once InconsistentNaming
+        public class UByteProperty : UProperty
+        {
+            [UnrealMemoryVar]
+            public IntPtr Enum;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        // ReSharper disable once InconsistentNaming
+        public class UUInt16Property : UNumericProperty
+        {
+
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        // ReSharper disable once InconsistentNaming
+        public class UUInt32Property : UNumericProperty
+        {
+
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        // ReSharper disable once InconsistentNaming
+        public class UUInt64Property : UNumericProperty
+        {
+
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        // ReSharper disable once InconsistentNaming
+        public class UInt8Property : UNumericProperty
+        {
+
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        // ReSharper disable once InconsistentNaming
+        public class UInt16Property : UNumericProperty
+        {
+
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        // ReSharper disable once InconsistentNaming
+        public class UIntProperty : UNumericProperty
+        {
+
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        // ReSharper disable once InconsistentNaming
+        public class UInt64Property : UNumericProperty
+        {
+
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        // ReSharper disable once InconsistentNaming
+        public class UFloatProperty : UNumericProperty
+        {
+
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        // ReSharper disable once InconsistentNaming
+        public class UDoubleProperty : UNumericProperty
+        {
+
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        // ReSharper disable once InconsistentNaming
+        public class UBoolProperty : UProperty
+        {
+            [UnrealMemoryVar]
+            public byte FieldSize;
+            [UnrealMemoryVar]
+            public byte ByteOffset;
+            [UnrealMemoryVar]
+            public byte ByteMask;
+            [UnrealMemoryVar]
+            public byte FieldMask;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        // ReSharper disable once InconsistentNaming
+        public class UObjectPropertyBase : UProperty
+        {
+            [UnrealMemoryVar]
+            public IntPtr PropertyClass;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        // ReSharper disable once InconsistentNaming
+        public class UObjectProperty : UObjectPropertyBase
+        {
+
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        // ReSharper disable once InconsistentNaming
+        public class UClassProperty : UObjectProperty
+        {
+            [UnrealMemoryVar]
+            public IntPtr MetaClass;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        // ReSharper disable once InconsistentNaming
+        public class UInterfaceProperty : UProperty
+        {
+            [UnrealMemoryVar]
+            public IntPtr InterfaceClass;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        // ReSharper disable once InconsistentNaming
+        public class UWeakObjectProperty : UObjectPropertyBase
+        {
+
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        // ReSharper disable once InconsistentNaming
+        public class ULazyObjectProperty : UObjectPropertyBase
+        {
+
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        // ReSharper disable once InconsistentNaming
+        public class UAssetObjectProperty : UObjectPropertyBase
+        {
+
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        // ReSharper disable once InconsistentNaming
+        public class UAssetClassProperty : UAssetObjectProperty
+        {
+            [UnrealMemoryVar]
+            public IntPtr MetaClass;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        // ReSharper disable once InconsistentNaming
+        public class UNameProperty : UProperty
+        {
+
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        // ReSharper disable once InconsistentNaming
+        public class UStructProperty : UProperty
+        {
+            [UnrealMemoryVar]
+            public IntPtr Struct;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        // ReSharper disable once InconsistentNaming
+        public class UStrProperty : UProperty
+        {
+
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        // ReSharper disable once InconsistentNaming
+        public class UTextProperty : UProperty
+        {
+
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        // ReSharper disable once InconsistentNaming
+        public class UArrayProperty : UProperty
+        {
+            [UnrealMemoryVar]
+            public IntPtr Inner;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        // ReSharper disable once InconsistentNaming
+        public class UMapProperty : UProperty
+        {
+            [UnrealMemoryVar]
+            public IntPtr KeyProp;
+            [UnrealMemoryVar]
+            public IntPtr ValueProp;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        // ReSharper disable once InconsistentNaming
+        public class UDelegateProperty : UProperty
+        {
+            [UnrealMemoryVar]
+            public IntPtr SignatureFunction;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        // ReSharper disable once InconsistentNaming
+        public class UMulticastDelegateProperty : UProperty
+        {
+            [UnrealMemoryVar]
+            public IntPtr SignatureFunction;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        // ReSharper disable once InconsistentNaming
+        public class UEnumProperty : UProperty
+        {
+            [UnrealMemoryVar]
+            public IntPtr UnderlyingProp;
+            [UnrealMemoryVar]
+            public IntPtr Enum;
+        }
     }
 }

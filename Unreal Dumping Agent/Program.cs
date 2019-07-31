@@ -33,13 +33,6 @@ namespace Unreal_Dumping_Agent
 
         private static void Main() => new Program().MainAsync().GetAwaiter().GetResult();
 
-        #region Workers
-        private async Task FindGNames()
-        {
-
-        }
-        #endregion
-
         private static async Task Test()
         {
             Utils.MemObj = new Memory.Memory(Utils.DetectUnrealGame());
@@ -48,8 +41,8 @@ namespace Unreal_Dumping_Agent
             Utils.MemObj.SuspendProcess();
             JsonReflector.LoadJsonEngine("EngineBase");
 
-            var fPointer = new EngineClasses.UObject();
-            await fPointer.ReadData((IntPtr)0x228E095C580);
+            var fPointer = new EngineClasses.UField();
+            await fPointer.ReadData((IntPtr)0x228E0C92B30);
 
             //var ss = JsonReflector.StructsList;
             //var gg = await GObjectsFinder.Find();
