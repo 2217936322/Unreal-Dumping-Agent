@@ -45,10 +45,12 @@ namespace Unreal_Dumping_Agent
             Utils.MemObj = new Memory.Memory(Utils.DetectUnrealGame());
             Utils.ScanObj = new Scanner(Utils.MemObj);
 
-            var fPointer = new EngineClasses.FPointer() { Dummy = (IntPtr)0x1121314151617181 };
-            fPointer.FixPointers();
+            Utils.MemObj.SuspendProcess();
+            JsonReflector.LoadJsonEngine("EngineBase");
 
-            //JsonReflector.LoadJsonEngine("EngineBase");
+            var fPointer = new EngineClasses.UObject();
+            await fPointer.ReadData((IntPtr)0x228E095C580);
+
             //var ss = JsonReflector.StructsList;
             //var gg = await GObjectsFinder.Find();
             //var gg = await GNamesFinder.Find();
@@ -56,7 +58,7 @@ namespace Unreal_Dumping_Agent
             //var pat = PatternScanner.Parse("None", 0, "4E 6F 6E 65 00", 0xFF);
             //var gg = await PatternScanner.FindPattern(Utils.MemObj, new List<PatternScanner.Pattern>() { pat });
 
-            Console.WriteLine(fPointer.Dummy.ToInt32());
+            Console.WriteLine();
         }
 
         private async Task MainAsync()
@@ -251,8 +253,9 @@ namespace Unreal_Dumping_Agent
                     Description = "That's what i found for you :-\n\n",
                 };
                 emb.WithFooter("Donate to keep me working :)");
+
                 for (int i = 0; i < finderResult.Count; i++)
-                    emb.Description += $"{i}) `0x{finderResult[i].ToInt64():X}`.\n";
+                    emb.Description += $"{i + 1}) `0x{finderResult[i].ToInt64():X}`.\n";
 
                 await lastMessage.ModifyAsync(msg =>
                 {

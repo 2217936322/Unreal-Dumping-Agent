@@ -139,12 +139,12 @@ namespace Unreal_Dumping_Agent.UtilsHelper
         #region FixPointers
         public static void FixPointers<T>(T structBase) where T : class, new()
         {
-            //if (ProgramIs64() && MemObj.Is64Bit)
-            //    return;
+            if (ProgramIs64() && MemObj.Is64Bit)
+                return;
 
             var structBytes = StructToBytes(structBase);
             var varsOffset = structBase.GetType().GetFields()
-                .Where(field => field.FieldType == typeof(IntPtr))
+                .Where(field => field.FieldType == typeof(IntPtr) && UnrealMemoryVar.HasAttribute(field))
                 .Select(field => Marshal.OffsetOf<T>(field.Name).ToInt32());
 
             foreach (var i in varsOffset)
@@ -153,13 +153,13 @@ namespace Unreal_Dumping_Agent.UtilsHelper
             var newStruct = BytesToStruct<T>(structBytes);
 
             // Set Fields
-            foreach (var field in structBase.GetType().GetFields())
+            foreach (var field in structBase.GetType().GetFields().Where(UnrealMemoryVar.HasAttribute))
                 field.SetValue(structBase, field.GetValue(newStruct));
         }
         private static void FixStructPointer(ref byte[] structBase, int varOffset)
         {
-            //if (ProgramIs64() && MemObj.Is64Bit)
-            //    throw new Exception("FixStructPointer only work for 32bit games with 64bit tool version.");
+            if (ProgramIs64() && MemObj.Is64Bit)
+                throw new Exception("FixStructPointer only work for 32bit games with 64bit tool version.");
 
             int structSize = structBase.Length;
             int srcSize = Math.Abs(varOffset - structSize) - 0x4;
@@ -306,20 +306,20 @@ namespace Unreal_Dumping_Agent.UtilsHelper
             // Check (InternalIndex) Is Valid
             for (int i = 0; i < objCount; i++)
             {
-                int internalIndex = MemObj.Rpm<int>(objects[i] + objInternalIndex);
+                int internalIndex = MemObj.Read<int>(objects[i] + objInternalIndex);
                 if (internalIndex != i)
                     return false;
             }
 
             // Check (Outer) Is Valid
             // first object must have Outer == nullptr(0x0000000000)
-            int uOuter = MemObj.Rpm<int>(objects[0] + objOuter);
+            int uOuter = MemObj.Read<int>(objects[0] + objOuter);
             if (uOuter != 0)
                 return false;
 
             // Check (FName_index) Is Valid
             // 2nd object must have FName_index == 100
-            int uFNameIndex = MemObj.Rpm<int>(objects[1] + objNameIndex);
+            int uFNameIndex = MemObj.Read<int>(objects[1] + objNameIndex);
             return uFNameIndex == 100;
         }
         #endregion

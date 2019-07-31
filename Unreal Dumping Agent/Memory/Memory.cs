@@ -6,6 +6,8 @@ using System.Linq;
 using System.Net.Mime;
 using System.Runtime.InteropServices;
 using System.Text;
+using Unreal_Dumping_Agent.Json;
+using Unreal_Dumping_Agent.Tools.SdkGen;
 using Unreal_Dumping_Agent.UtilsHelper;
 
 namespace Unreal_Dumping_Agent.Memory
@@ -98,7 +100,7 @@ namespace Unreal_Dumping_Agent.Memory
         /// </summary>
         public IntPtr ReadAddress(IntPtr lpBaseAddress)
         {
-            return new IntPtr(Is64Bit ? Rpm<long>(lpBaseAddress) : Rpm<int>(lpBaseAddress));
+            return new IntPtr(Is64Bit ? Read<long>(lpBaseAddress) : Read<int>(lpBaseAddress));
         }
 
         public bool ReadBytes(IntPtr lpBaseAddress, long len, out byte[] bytes)
@@ -113,7 +115,8 @@ namespace Unreal_Dumping_Agent.Memory
 
             while (true)
             {
-                ReadBytes(lpBaseAddress, charSize, out var buf);
+                if (!ReadBytes(lpBaseAddress, charSize, out var buf))
+                    break;
 
                 // Null-Terminator
                 if (buf.All(b => b == 0))
@@ -134,23 +137,109 @@ namespace Unreal_Dumping_Agent.Memory
             return ReadString(ReadAddress(lpBaseAddress), isUnicode);
         }
 
-        public T Rpm<T>(IntPtr lpBaseAddress) where T : struct
+        public bool Read<T>(ref T refStruct, IntPtr lpBaseAddress) where T : struct
         {
-            ReadBytes(lpBaseAddress, Marshal.SizeOf<T>(), out var buffer);
-            return buffer.ToStructure<T>();
+            if (!ReadBytes(lpBaseAddress, Marshal.SizeOf<T>(), out var buffer))
+                return false;
+
+            refStruct = buffer.ToStructure<T>();
+
+            return true;
         }
-        public T RpmPointer<T>(IntPtr lpBaseAddress) where T : struct
+        public T Read<T>(IntPtr lpBaseAddress) where T : struct
         {
-            return Rpm<T>(ReadAddress(lpBaseAddress));
+            var retStruct = new T();
+            Read(ref retStruct, lpBaseAddress);
+            return retStruct;
         }
-        public bool Wpm<T>(IntPtr lpBaseAddress, T value) where T : struct
+        public T ReadPointer<T>(IntPtr lpBaseAddress) where T : struct
+        {
+            return Read<T>(ReadAddress(lpBaseAddress));
+        }
+
+
+        /// <summary>
+        /// Read data from remote process as class.
+        /// </summary>
+        /// <typeparam name="T">Class type to read</typeparam>
+        /// <param name="refClass">Class instance of <see cref="T"/></param>
+        /// <param name="lpBaseAddress">Data address on remote process</param>
+        /// <param name="jsonMemoryOnly">Set data to <see cref="UnrealMemoryVar"/> only</param>
+        /// <returns>true if read successful</returns>
+        public bool ReadClass<T>(T refClass, IntPtr lpBaseAddress, bool jsonMemoryOnly = false) where T : class
+        {
+            if (!ReadBytes(lpBaseAddress, Marshal.SizeOf<T>(), out var buffer))
+                return false;
+
+            var outClass = buffer.ToClass<T>();
+
+            foreach (var field in refClass.GetType().GetFields())
+            {
+                if (jsonMemoryOnly && !UnrealMemoryVar.HasAttribute(field))
+                    continue;
+
+                field.SetValue(refClass, field.GetValue(outClass));
+            }
+
+            return true;
+        }
+        public T ReadClass<T>(IntPtr lpBaseAddress, bool jsonMemoryOnly = false) where T : class, new()
+        {
+            var ret = new T();
+            return !ReadClass(ret, lpBaseAddress, jsonMemoryOnly) ? null : ret;
+        }
+
+        /// <summary>
+        /// Read memory as <see cref="JsonStruct"/> and cast to class
+        /// </summary>
+        /// <typeparam name="T">Class type most of time will be inheritance form <see cref="IEngineStruct"/></typeparam>
+        /// <param name="refClass">Class to fill fields on</param>
+        /// <param name="lpBaseAddress">Address of data</param>
+        /// <param name="jsonStruct">JsonStruct that will cast call to</param>
+        /// <returns></returns>
+        public bool ReadJsonClass<T>(T refClass, IntPtr lpBaseAddress, JsonStruct jsonStruct) where T : class
+        {
+            if (!ReadBytes(lpBaseAddress, Marshal.SizeOf<T>(), out var buffer))
+                return false;
+
+            // Must Have UnrealMemoryVar Attribute AND Field With Same Name With JsonVar Name
+            foreach (var field in refClass.GetType().GetFields().Where(UnrealMemoryVar.HasAttribute))
+            {
+                // Get JsonVar
+                var jVar = jsonStruct[field.Name];
+
+                // Convert bytes to field type
+                var jVarBytes = new byte[jVar.Size];
+                Array.Copy(buffer, jVar.Offset, jVarBytes, 0, jVar.Size);
+
+                // Set JsonVar on Class Field
+                field.SetValue(refClass, jVarBytes.ToStructure(field.FieldType));
+            }
+
+            return true;
+        }
+        public T RpmClassPointer<T>(IntPtr lpBaseAddress) where T : class, new()
+        {
+            var ret = new T();
+            ReadClass(ret, ReadAddress(lpBaseAddress));
+
+            return ret;
+        }
+
+        public T ReadJsonClass<T>(IntPtr lpBaseAddress, JsonStruct jsonStruct) where T : class, new()
+        {
+            var ret = new T();
+            return !ReadJsonClass(ret, lpBaseAddress, jsonStruct) ? null : ret;
+        }
+
+        public bool Write<T>(IntPtr lpBaseAddress, T value) where T : struct
         {
             byte[] bytes = BitConverter.GetBytes((dynamic)value);
             return Win32.WriteProcessMemory(TargetProcess.Handle, lpBaseAddress, bytes, Marshal.SizeOf<T>(), out _);
         }
-        public bool WpmPointer<T>(IntPtr lpBaseAddress, T value) where T : struct
+        public bool WritePointer<T>(IntPtr lpBaseAddress, T value) where T : struct
         {
-            return Wpm(ReadAddress(lpBaseAddress), value);
+            return Write(ReadAddress(lpBaseAddress), value);
         }
         
         #endregion

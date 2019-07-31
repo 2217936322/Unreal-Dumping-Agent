@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -50,7 +51,7 @@ namespace Unreal_Dumping_Agent.Tools
 
                 } while (true);
 
-                var lockObj = new object(); // 0x227BDCD0000
+                var lockObj = new object(); // 0x228E0DA0000
                 Parallel.ForEach(memRegions, (memReg, loopState) =>
                 {
                     // Insert region information on Regions Holder
