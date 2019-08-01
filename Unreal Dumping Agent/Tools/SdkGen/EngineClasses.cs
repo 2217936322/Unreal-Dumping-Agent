@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Unreal_Dumping_Agent.Json;
@@ -214,32 +215,36 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
         }
 
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        [DebuggerDisplay("String = {AnsiName}, Index = {Index}")]
         // ReSharper disable once InconsistentNaming
         public class FNameEntity : IEngineStruct
         {
             public bool Init { get; private set; }
             public IntPtr ObjAddress { get; private set; }
+            private int AnsiNameOffset { get; set; } = -1;
 
             [UnrealMemoryVar]
             public int Index;
-            [UnrealMemoryVar]
+            // [UnrealMemoryVar] Not needed Read
             public string AnsiName;
 
             public string TypeName => GetType().Name;
             public JsonStruct JsonType => JsonReflector.GetStruct(TypeName);
-            public Task FixPointers() => Task.Run(() => Utils.FixPointers(this));
+            public Task FixPointers() => Task.Run(() => Task.Delay(0));
 
             public async Task<bool> ReadData(IntPtr address)
             {
                 if (address == IntPtr.Zero)
                     throw new ArgumentNullException($"`address` can't equal null !!");
+                if (AnsiNameOffset == -1)
+                    throw new NotSupportedException($"Call ReadData(IntPtr, int).");
 
                 // Set object address
                 ObjAddress = address;
 
                 // Read Struct
                 Utils.MemObj.ReadJsonClass(this, ObjAddress, JsonType);
-                AnsiName = Utils.MemObj.ReadString(address + JsonType["AnsiName"].Offset);
+                AnsiName = Utils.MemObj.ReadString(address + AnsiNameOffset);
 
                 // It's Initialized
                 Init = true;
@@ -249,6 +254,12 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
                 return true;
             }
             public async Task<bool> ReadData() => await ReadData(ObjAddress);
+            public async Task<bool> ReadData(IntPtr address, int ansiNameOffset)
+            {
+                ObjAddress = address;
+                AnsiNameOffset = ansiNameOffset;
+                return await ReadData();
+            }
         }
         #endregion
 

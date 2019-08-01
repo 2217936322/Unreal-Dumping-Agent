@@ -22,6 +22,14 @@ namespace Unreal_Dumping_Agent.UtilsHelper
         public const string Title = "Welcome Agent";
         public const string UnrealWindowClass = "UnrealWindow";
 
+        #region Extinction
+        public static bool HasFlag<T>(this int intVal, T flag) where T : Enum
+        {
+            T intToEnum = (T) Enum.ToObject(typeof(T), intVal);
+            return intToEnum.HasFlag(flag);
+        }
+        #endregion
+
         #region Enums
         public enum BotType
         {
@@ -188,7 +196,7 @@ namespace Unreal_Dumping_Agent.UtilsHelper
             if (Win32.VirtualQueryEx(MemObj.ProcessHandle, address, out var info, (uint)Marshal.SizeOf<Win32.MemoryBasicInformation>()) != 0)
             {
 		        // Bad Memory
-                return (info.State & (int)Win32.MemoryState.MemCommit) != 0 && (info.Protect & (int)Win32.MemoryProtection.PageNoAccess) == 0;
+                return /*(info.State & (int)Win32.MemoryState.MemCommit) != 0 && */ !info.Protect.HasFlag(Win32.MemoryProtection.PageNoAccess);
             }
 
             return false;
@@ -202,7 +210,7 @@ namespace Unreal_Dumping_Agent.UtilsHelper
             address = MemObj.ReadAddress(pointer);
             return IsValidRemoteAddress(address);
         }
-        public static bool IsValidGNamesAddress(IntPtr address, bool chunkCheck = false)
+        private static bool IsValidGNamesAddress(IntPtr address, bool chunkCheck)
         {
             if (MemObj == null || !IsValidRemoteAddress(address))
                 return false;
@@ -239,24 +247,38 @@ namespace Unreal_Dumping_Agent.UtilsHelper
 
             return result["NoneSig"].Count > 0;
         }
-        public static bool IsValidGNamesChunksAddress(IntPtr chunkPtr)
+        public static bool IsValidGNamesAddress(IntPtr staticAddress)
         {
-            return IsValidGNamesAddress(chunkPtr, true);
+            return IsValidGNamesAddress(staticAddress, false);
         }
-        public static int CalcNameOffset(IntPtr address)
+        public static bool IsValidGNamesChunksAddress(IntPtr chunkAddress)
         {
-            long curAddress = address.ToInt64();
-            uint sizeOfStruct = (uint)Marshal.SizeOf<Win32.MemoryBasicInformation>();
-
-            while (
-                Win32.VirtualQueryEx(MemObj.ProcessHandle, (IntPtr)curAddress, out var info, sizeOfStruct) == sizeOfStruct &&
-                info.BaseAddress != (ulong)curAddress &&
-                curAddress >= address.ToInt64() - 0x10)
+            return IsValidGNamesAddress(chunkAddress, true);
+        }
+        public static int CalcNameOffset(IntPtr address, bool isNoneAddress = true)
+        {
+            if (isNoneAddress)
             {
-                --curAddress;
+                long curAddress = address.ToInt64();
+                uint sizeOfStruct = (uint)Marshal.SizeOf<Win32.MemoryBasicInformation>();
+
+                while (
+                    Win32.VirtualQueryEx(MemObj.ProcessHandle, (IntPtr)curAddress, out var info, sizeOfStruct) == sizeOfStruct &&
+                    info.BaseAddress != (ulong)curAddress &&
+                    curAddress >= address.ToInt64() - 0x10)
+                {
+                    --curAddress;
+                }
+
+                return (int)(address.ToInt64() - curAddress);
             }
 
-            return (int)(address.ToInt64() - curAddress);
+            var noneSig = PatternScanner.Parse("None", 0, "4E 6F 6E 65 00");
+            var sigResult = PatternScanner.FindPattern(MemObj, address, address + 0x18, new List<PatternScanner.Pattern> { noneSig }, true).Result;
+            if (sigResult.ContainsKey("None"))
+                return (int)(sigResult["None"][0].ToInt64() - address.ToInt64());
+
+            return -1;
         }
         public static bool IsValidGObjectsAddress(IntPtr address)
         {
