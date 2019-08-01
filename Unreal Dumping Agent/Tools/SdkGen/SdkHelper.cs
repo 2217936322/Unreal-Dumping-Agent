@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Unreal_Dumping_Agent.Json;
+using Unreal_Dumping_Agent.Memory;
 
 namespace Unreal_Dumping_Agent.Tools.SdkGen
 {
@@ -60,5 +61,60 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
         /// </summary>
         /// <returns>if success will return true</returns>
         Task<bool> ReadData();
+    }
+
+    public enum SdkType
+    {
+        None,
+        Internal,
+        External
+    }
+
+    public struct PredefinedMember
+    {
+        public string Type;
+        public string Name;
+
+        public PredefinedMember(string type, string name)
+        {
+            Type = type;
+            Name = name;
+        }
+    }
+
+    public struct PredefinedMethod
+    {
+        public enum Type
+        {
+            Default,
+            Inline
+        }
+
+        public string Signature;
+        public string Body;
+        public Type MethodType;
+
+        /// <summary>
+        /// Adds a predefined method which gets splitter in declaration and definition.
+        /// </summary>
+        /// <param name="signature">The method signature.</param>
+        /// <param name="body">The method body.</param>
+        /// <returns>The method.</returns>
+        public static PredefinedMethod Default(string signature, string body)
+        {
+            return new PredefinedMethod { Signature = signature, Body = body, MethodType = Type.Default};
+        }
+
+        /// <summary>
+        /// Adds a predefined method which gets included as an inline method.
+        /// </summary>
+        /// <param name="signature">The method signature.</param>
+        /// <param name="body">The method body.</param>
+        /// <returns>The method.</returns>
+        public static PredefinedMethod Inline(string body)
+        {
+            return new PredefinedMethod { Signature = string.Empty, Body = body, MethodType = Type.Inline };
+        }
+
     }
 }
