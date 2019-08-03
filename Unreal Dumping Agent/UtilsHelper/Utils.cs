@@ -23,6 +23,12 @@ namespace Unreal_Dumping_Agent.UtilsHelper
         public const string UnrealWindowClass = "UnrealWindow";
 
         #region Extinction
+        public static T[] SubArray<T>(this T[] data, int index, int length)
+        {
+            var result = new T[length];
+            Array.Copy(data, index, result, 0, length);
+            return result;
+        }
         public static bool HasFlag<T>(this int intVal, T flag) where T : Enum
         {
             T intToEnum = (T) Enum.ToObject(typeof(T), intVal);

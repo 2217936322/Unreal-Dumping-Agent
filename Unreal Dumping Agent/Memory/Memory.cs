@@ -159,6 +159,18 @@ namespace Unreal_Dumping_Agent.Memory
             Read(ref retStruct, lpBaseAddress);
             return retStruct;
         }
+        public T[] ReadArray<T>(IntPtr lpBaseAddress, int count) where T : struct
+        {
+            int structSize = Marshal.SizeOf<T>();
+            if (!ReadBytes(lpBaseAddress, structSize * count, out var buffer))
+                return new T[0];
+
+            var retArray = new T[count];
+            for (int i = 0; i < count; i++)
+                retArray[i] = buffer.SubArray(i * structSize, structSize).ToStructure<T>();
+
+            return retArray;
+        }
         public T ReadPointer<T>(IntPtr lpBaseAddress) where T : struct
         {
             return Read<T>(ReadAddress(lpBaseAddress));
@@ -195,7 +207,19 @@ namespace Unreal_Dumping_Agent.Memory
             var ret = new T();
             return !ReadClass(ret, lpBaseAddress, jsonMemoryOnly) ? null : ret;
         }
-        public T RpmClassPointer<T>(IntPtr lpBaseAddress) where T : class, new()
+        public T[] ReadClassArray<T>(IntPtr lpBaseAddress, int count, bool jsonMemoryOnly = false) where T : class, new()
+        {
+            int structSize = Marshal.SizeOf<T>();
+            if (!ReadBytes(lpBaseAddress, structSize * count, out var buffer))
+                return new T[0];
+
+            var retArray = new T[count];
+            for (int i = 0; i < count; i++)
+                retArray[i] = buffer.SubArray(i * structSize, structSize).ToClass<T>();
+
+            return retArray;
+        }
+        public T ReadClassPointer<T>(IntPtr lpBaseAddress) where T : class, new()
         {
             var ret = new T();
             ReadClass(ret, ReadAddress(lpBaseAddress));

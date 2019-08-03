@@ -16,6 +16,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
         public class UEObject : IUnrealStruct
         {
             private static readonly int _typeId = NamesStore.GetByName(MethodBase.GetCurrentMethod().DeclaringType?.Name.Remove(1, 1)); // Remove E from `UEObject`
+            private static readonly UEClass _staticClass = ObjectsStore.FindClass($"Class CoreUObject.{MethodBase.GetCurrentMethod().DeclaringType?.Name.Remove(0, 2)}");
 
             protected UClass ObjClass { get; set; }
             protected UEObject Outer { get; set; }
@@ -30,7 +31,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
             public UEObject(UObject uObject) => Object = uObject;
 
             public int TypeId() => _typeId;
-            public UClass StaticClass() => _typeId;
+            public UEClass StaticClass() => _staticClass;
 
             public IntPtr GetAddress() => Object.ObjAddress;
             public bool IsValid()
@@ -163,20 +164,40 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
                     return false;
                 });
             }
-            public bool IsA(string typeName)
+            public async Task<bool> IsA(string typeName)
             {
+                return await Task.Run(() =>
+                {
+                    if (!IsValid())
+                        return false;
 
+                    for (UEClass super = GetClass(); super.IsValid(); super = (UEClass)super.GetSuper())
+                    {
+                        if (super.GetName() == typeName || super.GetNameCpp() == typeName)
+                            return true;
+                    }
+
+                    return false;
+                });
             }
+
+            public static bool operator==(UEObject lhs, UEObject rhs) => lhs?.GetAddress() == rhs?.GetAddress();
+            public static bool operator!=(UEObject lhs, UEObject rhs) => lhs?.GetAddress() != rhs?.GetAddress();
         }
 
         public class UEField : UEObject
         {
             protected UField ObjField { get; set; }
 
-            public UEField GetNext()
+            public async Task<UEField> GetNext()
             {
-                
+                if (!ObjField.Empty())
+                    ObjField = await Object.Cast<UField>();
 
+                if (!ObjField.Next.IsValid())
+                    return new UEField();
+
+                return (UEField)ObjectsStore.GetByAddress(ObjField.Next);
             }
         }
 
@@ -184,9 +205,22 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
         {
             protected UEnum ObjEnum;
 
-            public List<string> GetNames()
+            public async Task<List<string>> GetNames()
             {
+                var buffer = new List<string>();
+                if (ObjEnum.Empty())
+                    ObjEnum = await Object.Cast<UEnum>();
 
+                // Get Names
+                IntPtr dataAddress = ObjEnum.Names.Data;
+                if (ObjEnum.Names.Count > 300)
+                    throw new IndexOutOfRangeException("Enum have more than 300 value !!, Maybe EngineStructs Problem");
+
+                var cls = new FUEnumItem[ObjEnum.Names.Count];
+                for (int i = 0; i < UPPER; i++)
+                {
+                    
+                }
             }
         }
 

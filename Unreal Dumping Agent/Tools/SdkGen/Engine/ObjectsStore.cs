@@ -204,7 +204,8 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
         }
         public static UEClass FindClass(string name)
         {
-
+            var ret = GObjects.Objects.FirstOrDefault(o => o.GetFullName() == name);
+            return ret == null ? new UEClass() : (UEClass)ret;
         }
     }
 }

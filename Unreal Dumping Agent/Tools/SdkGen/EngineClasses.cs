@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Unreal_Dumping_Agent.Json;
+using Unreal_Dumping_Agent.UtilsHelper;
 using Utils = Unreal_Dumping_Agent.UtilsHelper.Utils;
 
 namespace Unreal_Dumping_Agent.Tools.SdkGen
@@ -289,10 +290,9 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
             [UnrealMemoryVar]
             public IntPtr Outer;
 
-            public virtual string TypeName => GetType().Name;
-            public int StructSize() => JsonType.GetSize();
+            public string TypeName => GetType().Name;
             public JsonStruct JsonType => JsonReflector.GetStruct(TypeName);
-
+            public int StructSize() => JsonType.GetSize();
             public Task FixPointers() => Task.Run(() => Utils.FixPointers(this));
 
             public virtual async Task<bool> ReadData(IntPtr address)
@@ -314,6 +314,20 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
                 return true;
             }
             public virtual async Task<bool> ReadData() => await ReadData(ObjAddress);
+
+            public bool Empty()
+            {
+                return ObjAddress.IsNull() && VfTable.IsNull();
+            }
+            public async Task<TEngineStruct> Cast<TEngineStruct>() where TEngineStruct : IEngineStruct, new()
+            {
+                var ret = new TEngineStruct();
+
+                if (Utils.MemObj != null)
+                    await ret.ReadData(ObjAddress);
+
+                return ret;
+            }
         }
 
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
