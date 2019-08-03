@@ -28,6 +28,9 @@ namespace Unreal_Dumping_Agent.UtilsHelper
             T intToEnum = (T) Enum.ToObject(typeof(T), intVal);
             return intToEnum.HasFlag(flag);
         }
+        public static bool IsNull(this IntPtr intPtr) => intPtr == IntPtr.Zero;
+        public static bool IsValid(this IntPtr intPtr) => intPtr != IntPtr.Zero && intPtr.ToInt32() != -1;
+        public static bool Empty(this string str) => string.IsNullOrEmpty(str);
         #endregion
 
         #region Enums
@@ -280,7 +283,7 @@ namespace Unreal_Dumping_Agent.UtilsHelper
 
             return -1;
         }
-        public static bool IsValidGObjectsAddress(IntPtr address)
+        public static bool IsValidGObjectsAddress(IntPtr chunksAddress)
         {
             if (JsonReflector.StructsList.Count == 0)
                 throw new NullReferenceException("You must init `JsonReflector` first.");
@@ -295,7 +298,7 @@ namespace Unreal_Dumping_Agent.UtilsHelper
             var objNameIndex = objectInfo["Name"].Offset;
             // => Get information
 
-	        IntPtr addressHolder = address;
+	        IntPtr addressHolder = chunksAddress;
             if (MemObj == null)
                 throw new NullReferenceException("`MemObj` is null !!");
 

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
@@ -29,7 +30,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
         public class FName
         {
-            public int ComparisonIndex;
+            public int Index;
             public int Number;
         }
 
@@ -135,6 +136,9 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
 
             public string TypeName => GetType().Name;
             public JsonStruct JsonType => JsonReflector.GetStruct(TypeName);
+
+            public int StructSize() => JsonType.GetSize();
+
             public Task FixPointers() => Task.Run(() => Utils.FixPointers(this));
 
             public IntPtr GetObj()
@@ -191,6 +195,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
 
             public string TypeName => GetType().Name;
             public JsonStruct JsonType => JsonReflector.GetStruct(TypeName);
+            public int StructSize() => JsonType.GetSize();
             public Task FixPointers() => Task.Run(() => Utils.FixPointers(this));
 
             public async Task<bool> ReadData(IntPtr address)
@@ -230,6 +235,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
 
             public string TypeName => GetType().Name;
             public JsonStruct JsonType => JsonReflector.GetStruct(TypeName);
+            public int StructSize() => JsonType.GetSize();
             public Task FixPointers() => Task.Run(() => Task.Delay(0));
 
             public async Task<bool> ReadData(IntPtr address)
@@ -284,6 +290,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
             public IntPtr Outer;
 
             public virtual string TypeName => GetType().Name;
+            public int StructSize() => JsonType.GetSize();
             public JsonStruct JsonType => JsonReflector.GetStruct(TypeName);
 
             public Task FixPointers() => Task.Run(() => Utils.FixPointers(this));

@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using System.Threading.Tasks;
 using Unreal_Dumping_Agent.Json;
-using Unreal_Dumping_Agent.Memory;
+using Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4;
 
 namespace Unreal_Dumping_Agent.Tools.SdkGen
 {
@@ -18,6 +16,21 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
     {
         public static bool HasAttribute<T>() => GetCustomAttributes(typeof(T)).Any(a => a is UnrealMemoryVar);
         public static bool HasAttribute(FieldInfo fi) => fi.GetCustomAttributes().Any(a => a is UnrealMemoryVar);
+    }
+
+    public interface IUnrealStruct
+    {
+        /// <summary>
+        /// Get Type ID of UnrealStruct
+        /// </summary>
+        /// <returns></returns>
+        int TypeId();
+
+        /// <summary>
+        /// Get Class Type of Unreal object
+        /// </summary>
+        /// <returns></returns>
+        GenericTypes.UEClass StaticClass();
     }
 
     public interface IEngineStruct
@@ -42,6 +55,11 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
         /// </summary>
         JsonStruct JsonType { get; }
 
+        /// <summary>
+        /// Get Size of struct
+        /// </summary>
+        /// <returns></returns>
+        int StructSize();
 
         /// <summary>
         /// Fix pointers for 32bit games on 64bit tool
@@ -108,7 +126,6 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
         /// <summary>
         /// Adds a predefined method which gets included as an inline method.
         /// </summary>
-        /// <param name="signature">The method signature.</param>
         /// <param name="body">The method body.</param>
         /// <returns>The method.</returns>
         public static PredefinedMethod Inline(string body)

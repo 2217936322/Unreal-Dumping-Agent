@@ -42,8 +42,8 @@ namespace Unreal_Dumping_Agent
             Utils.MemObj.SuspendProcess();
             JsonReflector.LoadJsonEngine("EngineBase");
 
-            await NamesStore.Initialize((IntPtr)0x7FF7BB8EF1A8);
-            var gg = NamesStore.GNames;
+            await ObjectsStore.Initialize((IntPtr)0x7FF636402B00);
+            var gg = ObjectsStore.GObjects;
 
             //var fPointer = new EngineClasses.UField();
             //await fPointer.ReadData((IntPtr)0x228E0C92B30);

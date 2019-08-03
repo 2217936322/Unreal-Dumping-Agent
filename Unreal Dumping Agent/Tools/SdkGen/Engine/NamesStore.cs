@@ -8,10 +8,10 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
 {
     public class GNameInfo
     {
-        public IntPtr Address;
-        public List<EngineClasses.FNameEntity> Names;
-        public List<IntPtr> Chunks;
-        public int ChunkSize;
+        public IntPtr Address { get; internal set; }
+        public List<EngineClasses.FNameEntity> Names { get; internal set; }
+        public List<IntPtr> Chunks { get; internal set; }
+        public int ChunkSize { get; internal set; }
 
         public GNameInfo()
         {
