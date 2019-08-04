@@ -227,9 +227,9 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
             public IntPtr ObjAddress { get; private set; }
             private int AnsiNameOffset { get; set; } = -1;
 
-            [JsonMemoryVar]
+            // [JsonMemoryVar] Not needed Read
             public int Index;
-            // [UnrealMemoryVar] Not needed Read
+            // [JsonMemoryVar] Not needed Read
             public string AnsiName;
 
             public string TypeName => GetType().Name;

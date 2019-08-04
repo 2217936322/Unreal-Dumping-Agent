@@ -17,6 +17,7 @@ using Unreal_Dumping_Agent.Memory;
 using Unreal_Dumping_Agent.Tools;
 using Unreal_Dumping_Agent.Tools.SdkGen;
 using Unreal_Dumping_Agent.Tools.SdkGen.Engine;
+using Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4;
 using Unreal_Dumping_Agent.UtilsHelper;
 
 namespace Unreal_Dumping_Agent
@@ -42,9 +43,14 @@ namespace Unreal_Dumping_Agent
             Utils.MemObj.SuspendProcess();
             JsonReflector.LoadJsonEngine("EngineBase");
 
-            await ObjectsStore.Initialize((IntPtr)0x7FF636402B00);
-            var gg = ObjectsStore.GObjects;
+            var names = await NamesStore.Initialize((IntPtr)0x7FF79536F1A8);
+            var objects = await ObjectsStore.Initialize((IntPtr)0x7FF795252B00);
 
+            var gobjects = ObjectsStore.GObjects;
+            var gnames = NamesStore.GNames;
+
+            var gg = new GenericTypes.UEField();
+            var gg1 = gg.StaticClass;
             //var fPointer = new EngineClasses.UField();
             //await fPointer.ReadData((IntPtr)0x228E0C92B30);
             //var ss = JsonReflector.StructsList;

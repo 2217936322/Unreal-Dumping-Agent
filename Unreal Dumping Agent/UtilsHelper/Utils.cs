@@ -35,7 +35,7 @@ namespace Unreal_Dumping_Agent.UtilsHelper
             return intToEnum.HasFlag(flag);
         }
         public static bool IsNull(this IntPtr intPtr) => intPtr == IntPtr.Zero;
-        public static bool IsValid(this IntPtr intPtr) => intPtr != IntPtr.Zero && intPtr.ToInt32() != -1;
+        public static bool IsValid(this IntPtr intPtr) => intPtr != IntPtr.Zero && intPtr.ToInt64() != -1;
         public static bool Empty(this string str) => string.IsNullOrEmpty(str);
         #endregion
 

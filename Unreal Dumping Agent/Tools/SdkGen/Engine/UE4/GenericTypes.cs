@@ -17,9 +17,6 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
         // ReSharper disable once InconsistentNaming
         public class UEObject : IUnrealStruct
         {
-            private static readonly int _typeId = NamesStore.GetByName(MethodBase.GetCurrentMethod().DeclaringType?.Name.Remove(1, 1)); // Remove E from `UEObject`
-            private static readonly Task<UEClass> _staticClass = ObjectsStore.FindClass($"Class CoreUObject.{MethodBase.GetCurrentMethod().DeclaringType?.Name.Remove(0, 2)}");
-
             protected UClass ObjClass { get; set; }
             protected UEObject Outer { get; set; }
             protected UEObject Package { get; set; }
@@ -32,8 +29,8 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
             public UEObject() => Object = new UObject();
             public UEObject(UObject uObject) => Object = uObject;
 
-            public int TypeId => _typeId;
-            public UEClass StaticClass => _staticClass.Result;
+            public int TypeId => NamesStore.GetByName(MethodBase.GetCurrentMethod().DeclaringType?.Name.Remove(1, 1));
+            public UEClass StaticClass => ObjectsStore.FindClass($"Class CoreUObject.{MethodBase.GetCurrentMethod().DeclaringType?.Name.Remove(0, 2)}").Result;
 
             public IntPtr GetAddress() => Object.ObjAddress;
             public bool IsValid()
@@ -81,7 +78,8 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
                     return FullName;
 
                 var cClass = await GetClass();
-                if (!cClass.IsValid()) return "(null)";
+                if (!cClass.IsValid())
+                    return "(null)";
 
                 string temp = string.Empty;
                 for (UEObject outer = await GetOuter(); outer.IsValid(); outer = await outer.GetOuter())
@@ -134,7 +132,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
                 if (!Object.Class.IsValid())
                     return new UEClass();
 
-                return (UEClass)await ObjectsStore.GetByAddress(Object.Class);
+                return (await ObjectsStore.GetByAddress(Object.Class)).Cast<UEClass>();
             }
             public async Task<UEObject> GetOuter()
             {
@@ -179,8 +177,26 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
                 return false;
             }
 
-            public static bool operator==(UEObject lhs, UEObject rhs) => lhs?.GetAddress() == rhs?.GetAddress();
-            public static bool operator!=(UEObject lhs, UEObject rhs) => lhs?.GetAddress() != rhs?.GetAddress();
+            #region Casting
+            public T Cast<T>() where T : UEObject, new()
+            {
+                var ret = new T
+                {
+                    FullName = FullName,
+                    NameCpp = NameCpp,
+                    ObjName = ObjName,
+                    Object = Object,
+                    ObjClass = ObjClass,
+                    Outer = Outer,
+                    Package = Package
+                };
+
+                return ret;
+            }
+            #endregion
+
+            public static bool operator ==(UEObject lhs, UEObject rhs) => lhs?.GetAddress() == rhs?.GetAddress();
+            public static bool operator !=(UEObject lhs, UEObject rhs) => lhs?.GetAddress() != rhs?.GetAddress();
 
             #region Auto Genrated Equals Overrides
             protected bool Equals(UEObject other)
@@ -214,7 +230,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
                 if (!ObjField.Next.IsValid())
                     return new UEField();
 
-                return (UEField)await ObjectsStore.GetByAddress(ObjField.Next);
+                return (await ObjectsStore.GetByAddress(ObjField.Next)).Cast<UEField>();
             }
         }
 
@@ -265,9 +281,8 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
                 if (!ObjStruct.SuperField.IsValid())
                     return new UEStruct();
 
-                return (UEStruct)await ObjectsStore.GetByAddress(ObjStruct.SuperField);
+                return (await ObjectsStore.GetByAddress(ObjStruct.SuperField)).Cast<UEStruct>();
             }
-
             public async Task<UEField> GetChildren()
             {
                 if (ObjStruct.Empty())
@@ -276,9 +291,8 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
                 if (!ObjStruct.Children.IsValid())
                     return new UEField();
 
-                return (UEField)await ObjectsStore.GetByAddress(ObjStruct.Children);
+                return (await ObjectsStore.GetByAddress(ObjStruct.Children)).Cast<UEField>();
             }
-
             public async Task<int> GetPropertySize()
             {
                 if (ObjStruct.Empty())
@@ -544,7 +558,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
                 if (!ObjByteProperty.Enum.IsValid())
                     return new UEEnum();
 
-                return (UEEnum)await ObjectsStore.GetByAddress(ObjByteProperty.Enum);
+                return (await ObjectsStore.GetByAddress(ObjByteProperty.Enum)).Cast<UEEnum>();
             }
             public new async Task<Info> GetInfo()
             {
@@ -736,7 +750,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
                 if (!ObjObjectPropertyBase.PropertyClass.IsValid())
                     return new UEClass();
 
-                return (UEClass)await ObjectsStore.GetByAddress(ObjObjectPropertyBase.PropertyClass);
+                return (await ObjectsStore.GetByAddress(ObjObjectPropertyBase.PropertyClass)).Cast<UEClass>();
             }
         }
 
@@ -766,7 +780,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
                 if (!ObjClassProperty.MetaClass.IsValid())
                     return new UEClass();
 
-                return (UEClass)await ObjectsStore.GetByAddress(ObjClassProperty.MetaClass);
+                return (await ObjectsStore.GetByAddress(ObjClassProperty.MetaClass)).Cast<UEClass>();
             }
             public new async Task<Info> GetInfo()
             {
@@ -787,7 +801,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
                 if (!ObjInterfaceProperty.InterfaceClass.IsValid())
                     return new UEClass();
 
-                return (UEClass)await ObjectsStore.GetByAddress(ObjInterfaceProperty.InterfaceClass);
+                return (await ObjectsStore.GetByAddress(ObjInterfaceProperty.InterfaceClass)).Cast<UEClass>();
             }
             public new async Task<Info> GetInfo()
             {
@@ -835,7 +849,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
                 if (!ObjAssetClassProperty.MetaClass.IsValid())
                     return new UEClass();
 
-                return (UEClass)await ObjectsStore.GetByAddress(ObjAssetClassProperty.MetaClass);
+                return (await ObjectsStore.GetByAddress(ObjAssetClassProperty.MetaClass)).Cast<UEClass>();
             }
             public new static Task<Info> GetInfo()
             {
@@ -865,7 +879,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
                 if (!ObjStructProperty.Struct.IsValid())
                     return new UEScriptStruct();
 
-                return (UEScriptStruct)await ObjectsStore.GetByAddress(ObjStructProperty.Struct);
+                return (await ObjectsStore.GetByAddress(ObjStructProperty.Struct)).Cast<UEScriptStruct>();
             }
             public new async Task<Info> GetInfo()
             {
@@ -903,7 +917,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
                 if (!ObjArrayProperty.Inner.IsValid())
                     return new UEProperty();
 
-                return (UEProperty)await ObjectsStore.GetByAddress(ObjArrayProperty.Inner);
+                return (await ObjectsStore.GetByAddress(ObjArrayProperty.Inner)).Cast<UEProperty>();
             }
             public new async Task<Info> GetInfo()
             {
@@ -928,7 +942,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
                 if (!ObjMapProperty.KeyProp.IsValid())
                     return new UEProperty();
 
-                return (UEProperty)await ObjectsStore.GetByAddress(ObjMapProperty.KeyProp);
+                return (await ObjectsStore.GetByAddress(ObjMapProperty.KeyProp)).Cast<UEProperty>();
             }
             public async Task<UEProperty> GetValueProperty()
             {
@@ -938,7 +952,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
                 if (!ObjMapProperty.ValueProp.IsValid())
                     return new UEProperty();
 
-                return (UEProperty)await ObjectsStore.GetByAddress(ObjMapProperty.ValueProp);
+                return (await ObjectsStore.GetByAddress(ObjMapProperty.ValueProp)).Cast<UEProperty>();
             }
             public new async Task<Info> GetInfo()
             {
@@ -970,7 +984,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
                 if (!ObjDelegateProperty.SignatureFunction.IsValid())
                     return new UEFunction();
 
-                return (UEFunction)await ObjectsStore.GetByAddress(ObjDelegateProperty.SignatureFunction);
+                return (await ObjectsStore.GetByAddress(ObjDelegateProperty.SignatureFunction)).Cast<UEFunction>();
             }
             public new static Task<Info> GetInfo()
             {
@@ -991,7 +1005,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
                 if (!ObjDelegateProperty.SignatureFunction.IsValid())
                     return new UEFunction();
 
-                return (UEFunction)await ObjectsStore.GetByAddress(ObjDelegateProperty.SignatureFunction);
+                return (await ObjectsStore.GetByAddress(ObjDelegateProperty.SignatureFunction)).Cast<UEFunction>();
             }
             public new static Task<Info> GetInfo()
             {
@@ -1012,7 +1026,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
                 if (!ObjEnumProperty.UnderlyingProp.IsValid())
                     return new UENumericProperty();
 
-                return (UENumericProperty)await ObjectsStore.GetByAddress(ObjEnumProperty.UnderlyingProp);
+                return (await ObjectsStore.GetByAddress(ObjEnumProperty.UnderlyingProp)).Cast<UENumericProperty>();
             }
             public async Task<UEEnum> GetEnum()
             {
@@ -1022,7 +1036,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
                 if (!ObjEnumProperty.Enum.IsValid())
                     return new UEEnum();
 
-                return (UEEnum)await ObjectsStore.GetByAddress(ObjEnumProperty.Enum);
+                return (await ObjectsStore.GetByAddress(ObjEnumProperty.Enum)).Cast<UEEnum>();
             }
             public new async Task<Info> GetInfo()
             {

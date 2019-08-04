@@ -21,6 +21,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
         public List<IntPtr> Chunks { get; internal set; }
         public bool IsPointerNextToPointer { get; internal set; }
         public bool IsChunksAddress { get; internal set; }
+        public bool ReadyToUse { get; internal set; }
 
         public GObjectInfo()
         {
@@ -37,6 +38,9 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
 
         public static async Task<bool> Initialize(IntPtr gobjectsAddress, bool forceReInit = true)
         {
+            if (!NamesStore.GNames.ReadyToUse)
+                throw new Exception("Initialize Names before try to initialize objects.");
+
             if (!Utils.IsValidGObjectsAddress(Utils.MemObj.ReadAddress(gobjectsAddress)))
                 return false;
 
@@ -159,18 +163,15 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
                 }
             }
 
+            GObjects.ReadyToUse = true;
             return true;
         }
         private static bool ReadUObject(IntPtr uObjectAddress, out UEObject retUObj)
         {
-            retUObj = new UEObject();
             var tmp = new UObject();
+            retUObj = new UEObject(tmp);
 
-            if (!Utils.IsValidRemoteAddress(uObjectAddress) || !tmp.ReadData(uObjectAddress).Result)
-                return false;
-
-            retUObj.Object = tmp;
-            return true;
+            return Utils.IsValidRemoteAddress(uObjectAddress) && tmp.ReadData(uObjectAddress).Result;
         }
 
         public static UEObject GetByIndex(int index) => GObjects.Objects[index];
@@ -210,9 +211,8 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
             return Task.Run(() =>
             {
                 var ret = GObjects.Objects.FirstOrDefault(o => o.GetFullName().Result == name);
-                return ret == null ? new UEClass() : (UEClass)ret;
+                return ret == null ? new UEClass() : ret.Cast<UEClass>();
             });
-           
         }
 
         private static Dictionary<string, int> _countCache;

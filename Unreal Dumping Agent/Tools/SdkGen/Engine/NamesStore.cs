@@ -12,6 +12,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
         public List<EngineClasses.FNameEntity> Names { get; internal set; }
         public List<IntPtr> Chunks { get; internal set; }
         public int ChunkSize { get; internal set; }
+        public bool ReadyToUse { get; internal set; }
 
         public GNameInfo()
         {
@@ -80,10 +81,12 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
                     if (!await tmp.ReadData(fNameAddress, nameOffset))
                         return false;
 
+                    tmp.Index = GNames.Names.Count;
                     GNames.Names.Add(tmp);
                 }
             }
 
+            GNames.ReadyToUse = true;
             return true;
         }
         public static bool IsValid(int index)
