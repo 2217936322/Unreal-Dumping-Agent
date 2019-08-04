@@ -12,10 +12,10 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
     /// <para>field name must equal <see cref="JsonVar"/> on <see cref="JsonStruct"/></para>
     /// </summary>
     [AttributeUsage(AttributeTargets.Field)]
-    public class UnrealMemoryVar : Attribute
+    public class JsonMemoryVar : Attribute
     {
-        public static bool HasAttribute<T>() => GetCustomAttributes(typeof(T)).Any(a => a is UnrealMemoryVar);
-        public static bool HasAttribute(FieldInfo fi) => fi.GetCustomAttributes().Any(a => a is UnrealMemoryVar);
+        public static bool HasAttribute<T>() => GetCustomAttributes(typeof(T)).Any(a => a is JsonMemoryVar);
+        public static bool HasAttribute(FieldInfo fi) => fi.GetCustomAttributes().Any(a => a is JsonMemoryVar);
     }
 
     public interface IUnrealStruct
@@ -24,13 +24,13 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
         /// Get Type ID of UnrealStruct
         /// </summary>
         /// <returns></returns>
-        int TypeId();
+        int TypeId { get; }
 
         /// <summary>
         /// Get Class Type of Unreal object
         /// </summary>
         /// <returns></returns>
-        GenericTypes.UEClass StaticClass();
+        GenericTypes.UEClass StaticClass { get; }
     }
 
     public interface IEngineStruct

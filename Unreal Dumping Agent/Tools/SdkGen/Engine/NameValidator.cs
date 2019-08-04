@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
+using Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4;
 
 namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
 {
@@ -44,9 +46,19 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
         {
             return !name.Contains(":") ? string.Empty : name.Substring(name.LastIndexOf(':') + 1);
         }
-        //public static string MakeUniqueCppNameImpl<T>(ref T t)
-        //{
-        //    string name;
-        //}
+        public static async Task<string> MakeUniqueCppNameImpl<T>(T t) where T : GenericTypes.UEObject, new()
+        {
+            string name = string.Empty;
+
+            if (await ObjectsStore.CountObjects<T>(await t.GetName()) > 1)
+                name += $"{MakeValidName((await t.GetOuter()).GetName().Result)}_";
+
+            return $"{name}{MakeValidName(await t.GetName())}";
+        }
+
+        public static string MakeUniqueCppName(GenericTypes.UEConst c) => MakeUniqueCppNameImpl(c).Result;
+        public static string MakeUniqueCppName(GenericTypes.UEEnum e) => MakeUniqueCppNameImpl(e).Result;
+        public static string MakeUniqueCppName(GenericTypes.UEStruct ss) => MakeUniqueCppNameImpl(ss).Result;
+
     }
 }

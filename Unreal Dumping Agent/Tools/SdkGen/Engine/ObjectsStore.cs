@@ -174,14 +174,17 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
         }
 
         public static UEObject GetByIndex(int index) => GObjects.Objects[index];
-        public static UEObject GetByAddress(IntPtr address)
+        public static Task<UEObject> GetByAddress(IntPtr address)
         {
-            var ueObject = GObjects.Objects.FirstOrDefault(obj => obj.Object.ObjAddress.ToInt64() == address.ToInt64());
+            return Task.Run(() =>
+            {
+                var ueObject = GObjects.Objects.FirstOrDefault(obj => obj.Object.ObjAddress.ToInt64() == address.ToInt64());
 
-            if (ueObject == null)
-                throw new KeyNotFoundException("Try to get wrong ObjectAddress. !! maybe it's EngineStructs problem.!!");
+                if (ueObject == null)
+                    throw new KeyNotFoundException("Try to get wrong ObjectAddress. !! maybe it's EngineStructs problem.!!");
 
-            return ueObject;
+                return ueObject;
+            });
         }
         public static UEObject GetByAddress(IntPtr address, out bool success)
         {
@@ -189,7 +192,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
             {
                 var obj = GetByAddress(address);
                 success = true;
-                return obj;
+                return obj.Result;
             }
             catch (KeyNotFoundException)
             {
@@ -202,10 +205,44 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
         {
             return GObjects.Objects.FindIndex(o => o.GetAddress() == address);
         }
-        public static UEClass FindClass(string name)
+        public static Task<UEClass> FindClass(string name)
         {
-            var ret = GObjects.Objects.FirstOrDefault(o => o.GetFullName() == name);
-            return ret == null ? new UEClass() : (UEClass)ret;
+            return Task.Run(() =>
+            {
+                var ret = GObjects.Objects.FirstOrDefault(o => o.GetFullName().Result == name);
+                return ret == null ? new UEClass() : (UEClass)ret;
+            });
+           
+        }
+
+        private static Dictionary<string, int> _countCache;
+        public static Task<int> CountObjects<T>(string name) where T : UEObject, new()
+        {
+            return Task.Run(() =>
+            {
+                lock (_countCache)
+                    _countCache = _countCache ?? new Dictionary<string, int>();
+
+                if (_countCache.ContainsKey(name))
+                    return _countCache[name];
+
+                int count = 0;
+                object lockObj = new object();
+
+                Parallel.ForEach(GObjects.Objects, async obj =>
+                {
+                    if (!await obj.IsA<T>() || await obj.GetName() != name)
+                        return;
+
+                    lock (lockObj)
+                        count++;
+                });
+
+                lock (_countCache)
+                    _countCache[name] = count;
+
+                return count;
+            });
         }
     }
 }

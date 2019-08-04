@@ -122,7 +122,7 @@ namespace Unreal_Dumping_Agent.Memory
                 if (buf.All(b => b == 0))
                     break;
 
-                ret += System.Text.Encoding.UTF8.GetString(buf);
+                ret += isUnicode ? Encoding.UTF8.GetString(buf) : Encoding.ASCII.GetString(buf);
                 lpBaseAddress += charSize;
             }
 
@@ -183,9 +183,9 @@ namespace Unreal_Dumping_Agent.Memory
         /// <typeparam name="T">Class type to read</typeparam>
         /// <param name="refClass">Class instance of <see cref="T"/></param>
         /// <param name="lpBaseAddress">Data address on remote process</param>
-        /// <param name="jsonMemoryOnly">Set data to <see cref="UnrealMemoryVar"/> only</param>
+        /// <param name="jsonVarOnly">Set data to <see cref="JsonMemoryVar"/> only</param>
         /// <returns>true if read successful</returns>
-        public bool ReadClass<T>(T refClass, IntPtr lpBaseAddress, bool jsonMemoryOnly = false) where T : class
+        public bool ReadClass<T>(T refClass, IntPtr lpBaseAddress) where T : class
         {
             if (!ReadBytes(lpBaseAddress, Marshal.SizeOf<T>(), out var buffer))
                 return false;
@@ -193,21 +193,16 @@ namespace Unreal_Dumping_Agent.Memory
             var outClass = buffer.ToClass<T>();
 
             foreach (var field in refClass.GetType().GetFields())
-            {
-                if (jsonMemoryOnly && !UnrealMemoryVar.HasAttribute(field))
-                    continue;
-
                 field.SetValue(refClass, field.GetValue(outClass));
-            }
 
             return true;
         }
-        public T ReadClass<T>(IntPtr lpBaseAddress, bool jsonMemoryOnly = false) where T : class, new()
+        public T ReadClass<T>(IntPtr lpBaseAddress) where T : class, new()
         {
             var ret = new T();
-            return !ReadClass(ret, lpBaseAddress, jsonMemoryOnly) ? null : ret;
+            return !ReadClass(ret, lpBaseAddress) ? null : ret;
         }
-        public T[] ReadClassArray<T>(IntPtr lpBaseAddress, int count, bool jsonMemoryOnly = false) where T : class, new()
+        public T[] ReadClassArray<T>(IntPtr lpBaseAddress, int count) where T : class, new()
         {
             int structSize = Marshal.SizeOf<T>();
             if (!ReadBytes(lpBaseAddress, structSize * count, out var buffer))
@@ -241,7 +236,7 @@ namespace Unreal_Dumping_Agent.Memory
                 return false;
 
             // Must Have UnrealMemoryVar Attribute AND Field With Same Name With JsonVar Name
-            foreach (var field in refClass.GetType().GetFields().Where(UnrealMemoryVar.HasAttribute))
+            foreach (var field in refClass.GetType().GetFields().Where(JsonMemoryVar.HasAttribute))
             {
                 // Get JsonVar
                 var jVar = jsonStruct[field.Name];

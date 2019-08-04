@@ -151,6 +151,20 @@ namespace Unreal_Dumping_Agent.UtilsHelper
         {
             return IsNumber(str, out _, out _);
         }
+        public static int GetBitPosition(byte value)
+        {
+            int i4 = ((value & 0xf) == 0 ? 1 : 0) << 2;
+            value >>= i4;
+
+            int i2 = ((value & 0x3) == 0 ? 1 : 0) << 1;
+            value >>= i2;
+
+            int i1 = (value & 0x1) == 0 ? 1 : 0;
+
+            int i0 = ((value >> i1) & 1) == 1 ? 0 : -8;
+
+            return i4 + i2 + i1 + i0;
+        }
         #endregion
 
         #region FixPointers
@@ -161,7 +175,7 @@ namespace Unreal_Dumping_Agent.UtilsHelper
 
             var structBytes = StructToBytes(structBase);
             var varsOffset = structBase.GetType().GetFields()
-                .Where(field => field.FieldType == typeof(IntPtr) && UnrealMemoryVar.HasAttribute(field))
+                .Where(field => field.FieldType == typeof(IntPtr) && JsonMemoryVar.HasAttribute(field))
                 .Select(field => Marshal.OffsetOf<T>(field.Name).ToInt32());
 
             foreach (var i in varsOffset)
@@ -170,7 +184,7 @@ namespace Unreal_Dumping_Agent.UtilsHelper
             var newStruct = BytesToStruct<T>(structBytes);
 
             // Set Fields
-            foreach (var field in structBase.GetType().GetFields().Where(UnrealMemoryVar.HasAttribute))
+            foreach (var field in structBase.GetType().GetFields().Where(JsonMemoryVar.HasAttribute))
                 field.SetValue(structBase, field.GetValue(newStruct));
         }
         private static void FixStructPointer(ref byte[] structBase, int varOffset)

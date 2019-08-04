@@ -130,16 +130,14 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
             public bool Init { get; private set; }
             public IntPtr ObjAddress { get; private set; }
 
-            [UnrealMemoryVar]
+            [JsonMemoryVar]
             public IntPtr ObjectPointer;
-            [UnrealMemoryVar]
+            [JsonMemoryVar]
             public IntPtr InterfacePointer;
 
             public string TypeName => GetType().Name;
             public JsonStruct JsonType => JsonReflector.GetStruct(TypeName);
-
             public int StructSize() => JsonType.GetSize();
-
             public Task FixPointers() => Task.Run(() => Utils.FixPointers(this));
 
             public IntPtr GetObj()
@@ -191,7 +189,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
             public bool Init { get; private set; }
             public IntPtr ObjAddress { get; private set; }
 
-            [UnrealMemoryVar]
+            [JsonMemoryVar]
             public IntPtr Object;
 
             public string TypeName => GetType().Name;
@@ -229,7 +227,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
             public IntPtr ObjAddress { get; private set; }
             private int AnsiNameOffset { get; set; } = -1;
 
-            [UnrealMemoryVar]
+            [JsonMemoryVar]
             public int Index;
             // [UnrealMemoryVar] Not needed Read
             public string AnsiName;
@@ -277,17 +275,17 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
             public bool Init { get; protected set; }
             public IntPtr ObjAddress { get; protected set; }
 
-            [UnrealMemoryVar]
+            [JsonMemoryVar]
             public IntPtr VfTable;
-            [UnrealMemoryVar]
+            [JsonMemoryVar]
             public int Flags;
-            [UnrealMemoryVar]
+            [JsonMemoryVar]
             public int InternalIndex;
-            [UnrealMemoryVar]
+            [JsonMemoryVar]
             public IntPtr Class;
-            [UnrealMemoryVar]
+            [JsonMemoryVar]
             public FName Name;
-            [UnrealMemoryVar]
+            [JsonMemoryVar]
             public IntPtr Outer;
 
             public string TypeName => GetType().Name;
@@ -334,7 +332,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
         // ReSharper disable once InconsistentNaming
         public class UField : UObject
         {
-            [UnrealMemoryVar]
+            [JsonMemoryVar]
             public IntPtr Next;
         }
 
@@ -342,11 +340,11 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
         // ReSharper disable once InconsistentNaming
         public class UEnum : UField
         {
-            [UnrealMemoryVar]
+            [JsonMemoryVar]
             public FString CppType;
-            [UnrealMemoryVar]
+            [JsonMemoryVar]
             public TArray Names;
-            [UnrealMemoryVar]
+            [JsonMemoryVar]
             public long CppForm;
         }
 
@@ -354,13 +352,13 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
         // ReSharper disable once InconsistentNaming
         public class UStruct : UField
         {
-            [UnrealMemoryVar]
+            [JsonMemoryVar]
             public IntPtr SuperField;
-            [UnrealMemoryVar]
+            [JsonMemoryVar]
             public IntPtr Children;
-            [UnrealMemoryVar]
+            [JsonMemoryVar]
             public int PropertySize;
-            [UnrealMemoryVar]
+            [JsonMemoryVar]
             public int MinAlignment;
         }
 
@@ -375,13 +373,13 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
         // ReSharper disable once InconsistentNaming
         public class UFunction : UStruct
         {
-            [UnrealMemoryVar]
+            [JsonMemoryVar]
             public int FunctionFlags;
-            [UnrealMemoryVar]
+            [JsonMemoryVar]
             public IntPtr FirstPropertyToInit;
-            [UnrealMemoryVar]
+            [JsonMemoryVar]
             public IntPtr EventGraphFunction;
-            [UnrealMemoryVar]
+            [JsonMemoryVar]
             public IntPtr Func;
         }
 
@@ -396,21 +394,21 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
         // ReSharper disable once InconsistentNaming
         public class UProperty : UField
         {
-            [UnrealMemoryVar]
+            [JsonMemoryVar]
             public int ArrayDim;
-            [UnrealMemoryVar]
+            [JsonMemoryVar]
             public int ElementSize;
-            [UnrealMemoryVar]
+            [JsonMemoryVar]
             public FQWord PropertyFlags;
-            [UnrealMemoryVar]
+            [JsonMemoryVar]
             public int Offset;
-            [UnrealMemoryVar]
+            [JsonMemoryVar]
             public IntPtr PropertyLinkNext;
-            [UnrealMemoryVar]
+            [JsonMemoryVar]
             public IntPtr NextRef;
-            [UnrealMemoryVar]
+            [JsonMemoryVar]
             public IntPtr DestructorLinkNext;
-            [UnrealMemoryVar]
+            [JsonMemoryVar]
             public IntPtr PostConstructLinkNext;
         }
 
@@ -425,7 +423,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
         // ReSharper disable once InconsistentNaming
         public class UByteProperty : UProperty
         {
-            [UnrealMemoryVar]
+            [JsonMemoryVar]
             public IntPtr Enum;
         }
 
@@ -496,13 +494,13 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
         // ReSharper disable once InconsistentNaming
         public class UBoolProperty : UProperty
         {
-            [UnrealMemoryVar]
+            [JsonMemoryVar]
             public byte FieldSize;
-            [UnrealMemoryVar]
+            [JsonMemoryVar]
             public byte ByteOffset;
-            [UnrealMemoryVar]
+            [JsonMemoryVar]
             public byte ByteMask;
-            [UnrealMemoryVar]
+            [JsonMemoryVar]
             public byte FieldMask;
         }
 
@@ -510,7 +508,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
         // ReSharper disable once InconsistentNaming
         public class UObjectPropertyBase : UProperty
         {
-            [UnrealMemoryVar]
+            [JsonMemoryVar]
             public IntPtr PropertyClass;
         }
 
@@ -525,7 +523,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
         // ReSharper disable once InconsistentNaming
         public class UClassProperty : UObjectProperty
         {
-            [UnrealMemoryVar]
+            [JsonMemoryVar]
             public IntPtr MetaClass;
         }
 
@@ -533,7 +531,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
         // ReSharper disable once InconsistentNaming
         public class UInterfaceProperty : UProperty
         {
-            [UnrealMemoryVar]
+            [JsonMemoryVar]
             public IntPtr InterfaceClass;
         }
 
@@ -562,7 +560,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
         // ReSharper disable once InconsistentNaming
         public class UAssetClassProperty : UAssetObjectProperty
         {
-            [UnrealMemoryVar]
+            [JsonMemoryVar]
             public IntPtr MetaClass;
         }
 
@@ -577,7 +575,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
         // ReSharper disable once InconsistentNaming
         public class UStructProperty : UProperty
         {
-            [UnrealMemoryVar]
+            [JsonMemoryVar]
             public IntPtr Struct;
         }
 
@@ -599,7 +597,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
         // ReSharper disable once InconsistentNaming
         public class UArrayProperty : UProperty
         {
-            [UnrealMemoryVar]
+            [JsonMemoryVar]
             public IntPtr Inner;
         }
 
@@ -607,9 +605,9 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
         // ReSharper disable once InconsistentNaming
         public class UMapProperty : UProperty
         {
-            [UnrealMemoryVar]
+            [JsonMemoryVar]
             public IntPtr KeyProp;
-            [UnrealMemoryVar]
+            [JsonMemoryVar]
             public IntPtr ValueProp;
         }
 
@@ -617,7 +615,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
         // ReSharper disable once InconsistentNaming
         public class UDelegateProperty : UProperty
         {
-            [UnrealMemoryVar]
+            [JsonMemoryVar]
             public IntPtr SignatureFunction;
         }
 
@@ -625,7 +623,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
         // ReSharper disable once InconsistentNaming
         public class UMulticastDelegateProperty : UProperty
         {
-            [UnrealMemoryVar]
+            [JsonMemoryVar]
             public IntPtr SignatureFunction;
         }
 
@@ -633,9 +631,9 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
         // ReSharper disable once InconsistentNaming
         public class UEnumProperty : UProperty
         {
-            [UnrealMemoryVar]
+            [JsonMemoryVar]
             public IntPtr UnderlyingProp;
-            [UnrealMemoryVar]
+            [JsonMemoryVar]
             public IntPtr Enum;
         }
     }
