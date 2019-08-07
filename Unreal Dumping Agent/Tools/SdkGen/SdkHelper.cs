@@ -7,6 +7,12 @@ using Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4;
 
 namespace Unreal_Dumping_Agent.Tools.SdkGen
 {
+
+    public enum UnrealVersion
+    {
+        Unreal4
+    }
+
     /// <summary>
     /// Attribute to make read <see cref="JsonStruct"/> easy. (It's for fields only)
     /// <para>field name must equal <see cref="JsonVar"/> on <see cref="JsonStruct"/></para>

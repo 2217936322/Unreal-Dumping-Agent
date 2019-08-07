@@ -46,7 +46,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
         {
             return !name.Contains(":") ? string.Empty : name.Substring(name.LastIndexOf(':') + 1);
         }
-        public static async Task<string> MakeUniqueCppNameImpl<T>(T t) where T : GenericTypes.UEObject, new()
+        private static async Task<string> MakeUniqueCppNameImpl<T>(T t) where T : GenericTypes.UEObject, new()
         {
             string name = string.Empty;
 

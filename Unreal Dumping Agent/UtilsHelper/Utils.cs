@@ -37,6 +37,7 @@ namespace Unreal_Dumping_Agent.UtilsHelper
         public static bool IsNull(this IntPtr intPtr) => intPtr == IntPtr.Zero;
         public static bool IsValid(this IntPtr intPtr) => intPtr != IntPtr.Zero && intPtr.ToInt64() != -1;
         public static bool Empty(this string str) => string.IsNullOrEmpty(str);
+        public static bool Empty<T>(this List<T> list) => list.Count == 0;
         #endregion
 
         #region Enums

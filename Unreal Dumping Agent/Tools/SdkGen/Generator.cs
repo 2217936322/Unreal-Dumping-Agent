@@ -23,6 +23,8 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
         public static SdkType SdkType { get; set; }
         public static string NameSpace { get; set; } = "Sdk";
         public static string SdkLang { get; set; }
+        public static string LangPaths { get; set; }
+        public static string SdkPath { get; set; }
         public static bool ShouldDumpArrays { get; set; } = false;
         public static bool ShouldGenerateEmptyFiles { get; set; } = false;
         public static bool ShouldUseStrings { get; set; } = true;
@@ -343,40 +345,32 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
 
             return name;
         }
-        public static bool GetPredefinedClassMembers(string name, out List<PredefinedMember> members)
+        public static bool GetPredefinedClassMembers(string name, ref List<PredefinedMember> members)
         {
-            members = null;
-
             if (!_predefinedMembers.ContainsKey(name))
                 return false;
 
             members = _predefinedMembers[name];
             return true;
         }
-        public static bool GetPredefinedClassStaticMembers(string name, out List<PredefinedMember> members)
+        public static bool GetPredefinedClassStaticMembers(string name, ref List<PredefinedMember> members)
         {
-            members = null;
-
             if (!_predefinedStaticMembers.ContainsKey(name))
                 return false;
 
             members = _predefinedStaticMembers[name];
             return true;
         }
-        public static bool GetVirtualFunctionPatterns(string name, out VirtualFunctionPatterns patterns)
+        public static bool GetVirtualFunctionPatterns(string name, ref VirtualFunctionPatterns patterns)
         {
-            patterns = null;
-
             if (!_virtualFunctionPattern.ContainsKey(name))
                 return false;
 
             patterns = _virtualFunctionPattern[name];
             return true;
         }
-        public static bool GetPredefinedClassMethods(string name, out List<PredefinedMethod> methods)
+        public static bool GetPredefinedClassMethods(string name, ref List<PredefinedMethod> methods)
         {
-            methods = null;
-
             if (!_predefinedMethods.ContainsKey(name))
                 return false;
 

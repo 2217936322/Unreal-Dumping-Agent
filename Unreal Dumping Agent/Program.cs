@@ -18,23 +18,37 @@ using Unreal_Dumping_Agent.Tools;
 using Unreal_Dumping_Agent.Tools.SdkGen;
 using Unreal_Dumping_Agent.Tools.SdkGen.Engine;
 using Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4;
+using Unreal_Dumping_Agent.Tools.SdkGen.Langs;
 using Unreal_Dumping_Agent.UtilsHelper;
 
 namespace Unreal_Dumping_Agent
 {
     /**
      * NOTES:
-     * 1- To debug async Exception Settings -> Check Common Language Runtime
+     * 1-
+     *      To debug async Exception Settings -> Check Common Language Runtime.
+     *
+     * 2-
+     *      Don't use string as file container (Read file or contact string to write a file),
+     *      use CorrmStringBuilder instead,
+     *      it's way faster and less resources.
      */
-    internal class Program
+
+    public class Program
     {
         private readonly ChatManager _chatManager = new ChatManager();
         private readonly HttpManager _httpManager = new HttpManager();
         private readonly DiscordManager _discordManager = new DiscordManager();
         private readonly List<UsersInfo> _knownUsers = new List<UsersInfo>();
 
-        private static void Main() => new Program().MainAsync().GetAwaiter().GetResult();
+        public static SdkLang Lang { get; set; }
 
+        public static Dictionary<string, SdkLang> SupportedLangs = new Dictionary<string, SdkLang>()
+        {
+            { "Cpp", new CppLang() }
+        };
+
+        private static void Main() => new Program().MainAsync().GetAwaiter().GetResult();
         private static async Task Test()
         {
             Utils.MemObj = new Memory.Memory(Utils.DetectUnrealGame());
@@ -61,6 +75,18 @@ namespace Unreal_Dumping_Agent
             //var gg = await PatternScanner.FindPattern(Utils.MemObj, new List<PatternScanner.Pattern>() { pat });
 
             Console.WriteLine();
+        }
+
+        private bool Init()
+        {
+            // Check if this lang is supported
+            if (!SupportedLangs.ContainsKey(Generator.SdkLang))
+                return false;
+
+            Lang = SupportedLangs[Generator.SdkLang];
+            Lang.Init();
+
+            return true;
         }
 
         private async Task MainAsync()
