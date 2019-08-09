@@ -41,12 +41,18 @@ namespace Unreal_Dumping_Agent
         private readonly DiscordManager _discordManager = new DiscordManager();
         private readonly List<UsersInfo> _knownUsers = new List<UsersInfo>();
 
+        #region SdkLang
         public static SdkLang Lang { get; set; }
-
         public static Dictionary<string, SdkLang> SupportedLangs = new Dictionary<string, SdkLang>()
         {
             { "Cpp", new CppLang() }
         };
+        #endregion
+
+        #region Paths
+        public static string LangsPath => Path.Combine(Environment.CurrentDirectory, "Config", "Langs");
+        public static string SdkGenPath => Path.Combine(Environment.CurrentDirectory, "Dump");
+        #endregion
 
         private static void Main() => new Program().MainAsync().GetAwaiter().GetResult();
         private static async Task Test()
@@ -57,14 +63,8 @@ namespace Unreal_Dumping_Agent
             Utils.MemObj.SuspendProcess();
             JsonReflector.LoadJsonEngine("EngineBase");
 
-            var names = await NamesStore.Initialize((IntPtr)0x7FF79536F1A8);
-            var objects = await ObjectsStore.Initialize((IntPtr)0x7FF795252B00);
+            await new SdkGenerator((IntPtr)0x7FF70D3B2B00, (IntPtr)0x7FF70D4CF1A8).Start(new AgentRequestInfo());
 
-            var gobjects = ObjectsStore.GObjects;
-            var gnames = NamesStore.GNames;
-
-            var gg = new GenericTypes.UEField();
-            var gg1 = gg.StaticClass;
             //var fPointer = new EngineClasses.UField();
             //await fPointer.ReadData((IntPtr)0x228E0C92B30);
             //var ss = JsonReflector.StructsList;
@@ -75,18 +75,6 @@ namespace Unreal_Dumping_Agent
             //var gg = await PatternScanner.FindPattern(Utils.MemObj, new List<PatternScanner.Pattern>() { pat });
 
             Console.WriteLine();
-        }
-
-        private bool Init()
-        {
-            // Check if this lang is supported
-            if (!SupportedLangs.ContainsKey(Generator.SdkLang))
-                return false;
-
-            Lang = SupportedLangs[Generator.SdkLang];
-            Lang.Init();
-
-            return true;
         }
 
         private async Task MainAsync()

@@ -125,7 +125,7 @@
         { "Children": "UField*" },
         { "PropertySize": "int" },
         { "MinAlignment": "int" },
-        { "pad": "64" }
+        { "pad": "0x64" }
       ],
       "note": ""
     },

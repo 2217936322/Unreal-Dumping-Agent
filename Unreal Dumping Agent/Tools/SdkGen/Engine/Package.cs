@@ -10,9 +10,15 @@ using Unreal_Dumping_Agent.UtilsHelper;
 namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
 {
     using VirtualFunctionPatterns = Dictionary<PatternScanner.Pattern, string>;
+
     // ToDo: Most Important Thing, like on GenerateMembers, in loop u can run all async methods in prop and then wait when u need
+
+#pragma warning disable 660,661
     public class Package
+#pragma warning restore 660,661
     {
+        public static Dictionary<GenericTypes.UEObject, Package> PackageMap = new Dictionary<GenericTypes.UEObject, Package>();
+
         public List<Constant> Constants { get; }
         public List<Class> Classes { get; }
         public List<ScriptStruct> ScriptStructs { get; }
@@ -203,11 +209,9 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
         /// Process the classes the package contains.
         /// </summary>
         /// <returns>Return processedObjects</returns>
-        public async Task<Dictionary<IntPtr, bool>> Process()
+        public async Task<Dictionary<IntPtr, bool>> Process(Dictionary<IntPtr, bool> processedObjects)
         {
-            var processedObjects = new Dictionary<IntPtr, bool>();
             var objsInPack = await GetObjsInPack(_packageObj);
-
             foreach (var obj in objsInPack)
             {
                 // IsA
@@ -235,7 +239,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
                 }
             }
 
-            return objsInPack;
+            return processedObjects;
         }
 
         /// <summary>
@@ -263,7 +267,8 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
             return false;
         }
 
-        public bool AddDependency(GenericTypes.UEObject package)
+        #region Generate
+        private bool AddDependency(GenericTypes.UEObject package)
         {
             if (package == _packageObj)
                 return false;
@@ -274,7 +279,6 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
             return true;
         }
 
-        #region Generate
         /// <summary>
         /// Checks and generates the prerequisites of the object.
         /// Should be a UEClass or UEScriptStruct.
@@ -282,7 +286,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
         /// <param name="obj">The object.</param>
         /// <param name="processedObjects">[IN] Processed Objects</param>
         /// <returns>Return Processed Objects</returns>
-        public async Task<Dictionary<IntPtr, bool>> GeneratePrerequisites(GenericTypes.UEObject obj, Dictionary<IntPtr, bool> processedObjects)
+        private async Task<Dictionary<IntPtr, bool>> GeneratePrerequisites(GenericTypes.UEObject obj, Dictionary<IntPtr, bool> processedObjects)
         {
             if (!obj.IsValid())
                 return processedObjects;
@@ -300,6 +304,9 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
             {
                 return processedObjects;
             }
+
+            if (!processedObjects.ContainsKey(obj.GetAddress()))
+                processedObjects[obj.GetAddress()] = false;
 
             processedObjects[obj.GetAddress()] = processedObjects[obj.GetAddress()] | false;
 
@@ -345,7 +352,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
         /// <param name="first">The first member in the chain.</param>
         /// <param name="processedObjects">[IN] Processed Objects</param>
         /// <returns>Return Processed Objects</returns>
-        public async Task<Dictionary<IntPtr, bool>> GenerateMemberPrerequisites(GenericTypes.UEProperty first, Dictionary<IntPtr, bool> processedObjects)
+        private async Task<Dictionary<IntPtr, bool>> GenerateMemberPrerequisites(GenericTypes.UEProperty first, Dictionary<IntPtr, bool> processedObjects)
         {
             for (GenericTypes.UEProperty prop = first; prop.IsValid(); prop = (await prop.GetNext()).Cast<GenericTypes.UEProperty>())
             {
@@ -413,7 +420,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
         /// Generates a script structure.
         /// </summary>
         /// <param name="scriptStructObj">The script structure object.</param>
-        public async Task GenerateScriptStruct(GenericTypes.UEScriptStruct scriptStructObj)
+        private async Task GenerateScriptStruct(GenericTypes.UEScriptStruct scriptStructObj)
         {
             var ss = new ScriptStruct
             {
@@ -485,7 +492,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
         /// Generates an enum.
         /// </summary>
         /// <param name="enumObj">The enum object.</param>
-        public async Task GenerateEnum(GenericTypes.UEEnum enumObj)
+        private async Task GenerateEnum(GenericTypes.UEEnum enumObj)
         {
             var e = new Enum
             {
@@ -523,7 +530,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
         /// Generates a constant.
         /// </summary>
         /// <param name="constObj">The constant object.</param>
-        public Task GenerateConst(GenericTypes.UEConst constObj)
+        private Task GenerateConst(GenericTypes.UEConst constObj)
         {
             return Task.Run(() =>
             {
@@ -543,7 +550,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
         /// Generates the class.
         /// </summary>
         /// <param name="classObj">The class object.</param>
-        public async Task GenerateClass(GenericTypes.UEClass classObj)
+        private async Task GenerateClass(GenericTypes.UEClass classObj)
         {
             var c = new Class
             {
@@ -627,7 +634,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
                 // ToDo: Check Here
                 properties.Sort((x, y) => ComparePropertyLess(x, y).Result ? 0 : 1);
 
-                GenerateMembers(classObj, offset, properties, c.Members);
+                c.Members = await GenerateMembers(classObj, offset, properties);
             }
 
             Generator.GetPredefinedClassMethods(c.FullName, ref c.PredefinedMethods);
@@ -658,7 +665,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
                     );
                 }
 
-                GenerateMethods(classObj, c.Methods);
+                c.Methods = await GenerateMethods(classObj);
 
                 //search virtual functions
                 var patterns = new VirtualFunctionPatterns();
@@ -715,7 +722,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
         /// <param name="size">The size.</param>
         /// <param name="reason">The reason.</param>
         /// <returns>A padding member.</returns>
-        public static Member CreatePadding(int id, int offset, int size, string reason)
+        private static Member CreatePadding(int id, int offset, int size, string reason)
         {
             var ss = new Member
             {
@@ -737,7 +744,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
         /// <param name="type">The type.</param>
         /// <param name="bits">The bits.</param>
         /// <returns>A padding member.</returns>
-        public static Member CreateBitfieldPadding(int id, int offset, string type, int bits)
+        private static Member CreateBitfieldPadding(int id, int offset, string type, int bits)
         {
             var ss = new Member
             {
@@ -757,7 +764,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
         /// <param name="offset">The start offset.</param>
         /// <param name="properties">The properties describing the members.</param>
         /// <returns>The members of the struct or class.</returns>
-        public async Task<List<Member>> GenerateMembers(GenericTypes.UEStruct structObj, int offset, List<GenericTypes.UEProperty> properties)
+        private async Task<List<Member>> GenerateMembers(GenericTypes.UEStruct structObj, int offset, List<GenericTypes.UEProperty> properties)
         {
             var members = new List<Member>();
             var uniqueMemberNames = new Dictionary<string, int>();
@@ -858,7 +865,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
         /// </summary>
         /// <param name="classObj">The class object.</param>
         /// <returns>Return The methods of the class.</returns>
-        public async Task<List<Method>> GenerateMethods(GenericTypes.UEClass classObj)
+        private async Task<List<Method>> GenerateMethods(GenericTypes.UEClass classObj)
         {
             var methods = new List<Method>();
 
@@ -958,21 +965,21 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
         #endregion
 
         #region SavePackage
-        public void SaveStructs()
+        private void SaveStructs()
         {
             Program.Lang.SaveStructs(this);
         }
-        public void SaveClasses()
+        private void SaveClasses()
         {
             Program.Lang.SaveClasses(this);
         }
-        public void SaveFunctions()
+        private void SaveFunctions()
         {
             Program.Lang.SaveFunctions(this);
         }
-        public void SdkAfterFinish()
+        private void SaveConstants()
         {
-            Program.Lang.SdkAfterFinish(_packageObj, );
+
         }
         #endregion
     }

@@ -232,7 +232,7 @@ namespace Unreal_Dumping_Agent.Memory
         /// <returns></returns>
         public bool ReadJsonClass<T>(T refClass, IntPtr lpBaseAddress, JsonStruct jsonStruct) where T : class
         {
-            if (!ReadBytes(lpBaseAddress, Marshal.SizeOf<T>(), out var buffer))
+            if (!ReadBytes(lpBaseAddress, jsonStruct.GetSize(), out var buffer))
                 return false;
 
             // Must Have UnrealMemoryVar Attribute AND Field With Same Name With JsonVar Name

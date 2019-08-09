@@ -73,7 +73,7 @@ namespace Unreal_Dumping_Agent.Json
                 return IntPtr.Size;
 
 	        // Other type (usually) structs
-            if (Utils.IsNumber(typeName, out int val, out _))
+            if (Utils.IsNumber(typeName, out int val))
                 return val;
 
             if (!IsStructType(typeName))
@@ -167,8 +167,8 @@ namespace Unreal_Dumping_Agent.Json
                         ret.Vars.Add(sName, jVar);
                         offset += jVar.Size;
 
-                        structSize += Utils.IsNumber(sVar.Value.ToString()) 
-                            ? int.Parse(sVar.Value.ToString()) 
+                        structSize += Utils.IsNumber(sVar.Value.ToString(), out int val) 
+                            ? val
                             : VarSizeFromName(sVar.Value.ToString());
                     }
                 }

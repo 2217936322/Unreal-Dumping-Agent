@@ -64,7 +64,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
 
             return varList;
         }
-        public static void Initialize()
+        public static bool Initialize()
         {
             _overrideTypes = new Dictionary<string, string>();
             _predefinedMembers = new Dictionary<string, List<PredefinedMember>>();
@@ -319,6 +319,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
 	};
              */
 
+            return true;
         }
         public static string GetOutputDirectory()
         {

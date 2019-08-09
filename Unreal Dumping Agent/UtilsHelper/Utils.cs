@@ -141,7 +141,12 @@ namespace Unreal_Dumping_Agent.UtilsHelper
         }
         public static bool IsNumber(string str, out int val, out bool isHex)
         {
-            isHex = int.TryParse(str, NumberStyles.HexNumber, new NumberFormatInfo(), out val);
+            val = -1;
+            isHex = str.StartsWith("0x");
+
+            if (isHex)
+                isHex = int.TryParse(str.Remove(0, 2), NumberStyles.HexNumber, new NumberFormatInfo(), out val);
+
             return isHex || int.TryParse(str, out val);
         }
         public static bool IsNumber(string str, out int val)
@@ -208,10 +213,6 @@ namespace Unreal_Dumping_Agent.UtilsHelper
         #endregion
 
         #region Address Stuff
-        public static int PointerSize()
-        {
-            return MemObj.Is64Bit ? 0x8 : 0x4;
-        }
         public static bool IsValidRemoteAddress(IntPtr address)
         {
             if (MemObj == null || address == IntPtr.Zero || address.ToInt64() < 0)
@@ -251,7 +252,7 @@ namespace Unreal_Dumping_Agent.UtilsHelper
             for (int i = 0; i < 50 && nullCount <= 3; i++)
             {
                 // Read Chunk Address
-                var offset = i * PointerSize();
+                var offset = i * GamePointerSize();
                 var chunkAddress = MemObj.ReadAddress(address + offset);
                 if (chunkAddress == IntPtr.Zero)
                     ++nullCount;
@@ -303,6 +304,22 @@ namespace Unreal_Dumping_Agent.UtilsHelper
                 return (int)(sigResult["None"][0].ToInt64() - address.ToInt64());
 
             return -1;
+        }
+        public static bool IsTArray(IntPtr address)
+        {
+            // Check PreAllocatedObjects it's always null, it's only on new TUObjectArray then it's good to check
+            return !MemObj.ReadAddress(address + GamePointerSize()).IsNull();
+        }
+        public static bool IsTUobjectArray(IntPtr address)
+        {
+            // if game have chunks, then it's not TArray
+            IntPtr gObjectArray = MemObj.ReadAddress(MemObj.ReadAddress(address));
+            if (!IsTArray(address) && IsValidGObjectsAddress(gObjectArray))
+                return true;
+
+            // if game don't use chunks, then it's must be TArray
+            gObjectArray = MemObj.ReadAddress(address);
+            return IsTArray(address) && IsValidGObjectsAddress(gObjectArray);
         }
         public static bool IsValidGObjectsAddress(IntPtr chunksAddress)
         {

@@ -215,14 +215,11 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
             });
         }
 
-        private static Dictionary<string, int> _countCache;
+        private static readonly Dictionary<string, int> _countCache = new Dictionary<string, int>();
         public static Task<int> CountObjects<T>(string name) where T : UEObject, new()
         {
             return Task.Run(() =>
             {
-                lock (_countCache)
-                    _countCache = _countCache ?? new Dictionary<string, int>();
-
                 if (_countCache.ContainsKey(name))
                     return _countCache[name];
 

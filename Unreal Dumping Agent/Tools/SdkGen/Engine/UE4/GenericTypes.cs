@@ -13,11 +13,11 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
 {
     public class GenericTypes : IEngineVersion
     {
-        [DebuggerDisplay("Address = {Object.ObjAddress.ToInt64().ToString(\"X8\")}, ID = {TypeId}")]
+        [DebuggerDisplay("Address = {Object.ObjAddress.ToInt64().ToString(\"X8\")}, TypeID = {TypeId}")]
         // ReSharper disable once InconsistentNaming
         public class UEObject : IUnrealStruct
         {
-            protected UClass ObjClass { get; set; }
+            protected UClass ObjClass { get; set; } 
             protected UEObject Outer { get; set; }
             protected UEObject Package { get; set; }
             protected string ObjName { get; set; }
@@ -26,11 +26,14 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
 
             public UObject Object { get; set; }
 
-            public UEObject() => Object = new UObject();
+            public UEObject()
+            {
+                Object = new UObject();
+            }
             public UEObject(UObject uObject) => Object = uObject;
 
-            public int TypeId => NamesStore.GetByName(MethodBase.GetCurrentMethod().DeclaringType?.Name.Remove(1, 1));
-            public UEClass StaticClass => ObjectsStore.FindClass($"Class CoreUObject.{MethodBase.GetCurrentMethod().DeclaringType?.Name.Remove(0, 2)}").Result;
+            public int TypeId => NamesStore.GetByName(GetType().Name.Remove(0, 2));
+            public UEClass StaticClass => ObjectsStore.FindClass($"Class CoreUObject.{GetType().Name.Remove(0, 2)}").Result;
 
             public IntPtr GetAddress() => Object.ObjAddress;
             public bool IsValid()
@@ -97,7 +100,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
                 string name = string.Empty;
                 if (IsA<UEClass>().Result)
                 {
-                    var c = (UEClass)this;
+                    var c = this.Cast<UEClass>();
                     while (c.IsValid())
                     {
                         string className = await c.GetName();
@@ -112,7 +115,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
                             break;
                         }
 
-                        c = (UEClass)await c.GetSuper();
+                        c = (await c.GetSuper()).Cast<UEClass>();
                     }
                 }
                 else
@@ -156,7 +159,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
                     return false;
 
                 int cmpTypeId = new T().TypeId;
-                for (UEClass super = await GetClass(); super.IsValid(); super = (UEClass)await super.GetSuper())
+                for (UEClass super = await GetClass(); super.IsValid(); super = (await super.GetSuper()).Cast<UEClass>())
                 {
                     if (super.Object.Name.Index == cmpTypeId)
                         return true;
@@ -168,7 +171,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
                 if (!IsValid())
                     return false;
 
-                for (UEClass super = await GetClass(); super.IsValid(); super = (UEClass)await super.GetSuper())
+                for (UEClass super = await GetClass(); super.IsValid(); super = (await super.GetSuper()).Cast<UEClass>())
                 {
                     if (await super.GetName() == typeName || await super.GetNameCpp() == typeName)
                         return true;
@@ -220,7 +223,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
         // ReSharper disable once InconsistentNaming
         public class UEField : UEObject
         {
-            protected UField ObjField { get; set; }
+            protected UField ObjField { get; set; } = new UField();
 
             public async Task<UEField> GetNext()
             {
@@ -237,7 +240,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
         // ReSharper disable once InconsistentNaming
         public class UEEnum : UEField
         {
-            protected UEnum ObjEnum;
+            protected UEnum ObjEnum = new UEnum();
 
             public async Task<List<string>> GetNames()
             {
@@ -271,7 +274,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
         // ReSharper disable once InconsistentNaming
         public class UEStruct : UEField
         {
-            protected UStruct ObjStruct;
+            protected UStruct ObjStruct = new UStruct();
 
             public async Task<UEStruct> GetSuper()
             {
@@ -311,7 +314,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
         // ReSharper disable once InconsistentNaming
         public class UEFunction : UEStruct
         {
-            protected UFunction ObjFunction;
+            protected UFunction ObjFunction = new UFunction();
 
             public async Task<UEFunctionFlags> GetFunctionFlags()
             {
@@ -355,7 +358,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
                 }
             }
 
-            protected UProperty ObjProperty;
+            protected UProperty ObjProperty = new UProperty();
             protected bool InfoChanged;
             protected Info CurInfo;
 
@@ -544,7 +547,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
         // ReSharper disable once InconsistentNaming
         public class UEByteProperty : UEProperty
         {
-            protected UByteProperty ObjByteProperty;
+            protected UByteProperty ObjByteProperty = new UByteProperty();
 
             public async Task<bool> IsEnum()
             {
@@ -651,7 +654,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
         // ReSharper disable once InconsistentNaming
         public class UEBoolProperty : UEProperty
         {
-            protected UBoolProperty ObjBoolProperty;
+            protected UBoolProperty ObjBoolProperty = new UBoolProperty();
 
             public async Task<bool> IsNativeBool()
             {
@@ -740,7 +743,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
         // ReSharper disable once InconsistentNaming
         public class UEObjectPropertyBase : UEProperty
         {
-	        protected UObjectPropertyBase ObjObjectPropertyBase;
+	        protected UObjectPropertyBase ObjObjectPropertyBase = new UObjectPropertyBase();
 
             public async Task<UEClass> GetPropertyClass()
             {
@@ -770,7 +773,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
         // ReSharper disable once InconsistentNaming
         public class UEClassProperty : UEObjectProperty
         {
-            protected UClassProperty ObjClassProperty;
+            protected UClassProperty ObjClassProperty = new UClassProperty();
 
             public async Task<UEClass> GetMetaClass()
             {
@@ -791,7 +794,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
         // ReSharper disable once InconsistentNaming
         public class UEInterfaceProperty : UEProperty
         {
-            protected UInterfaceProperty ObjInterfaceProperty;
+            protected UInterfaceProperty ObjInterfaceProperty = new UInterfaceProperty();
 
             public async Task<UEClass> GetInterfaceClass()
             {
@@ -839,7 +842,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
         // ReSharper disable once InconsistentNaming
         public class UEAssetClassProperty : UEAssetObjectProperty
         {
-            protected UAssetClassProperty ObjAssetClassProperty;
+            protected UAssetClassProperty ObjAssetClassProperty = new UAssetClassProperty();
 
             public async Task<UEClass> GetMetaClass()
             {
@@ -869,7 +872,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
         // ReSharper disable once InconsistentNaming
         public class UEStructProperty : UEProperty
         {
-            protected UStructProperty ObjStructProperty;
+            protected UStructProperty ObjStructProperty = new UStructProperty();
 
             public async Task<UEScriptStruct> GetStruct()
             {
@@ -908,7 +911,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
         // ReSharper disable once InconsistentNaming
         public class UEArrayProperty : UEProperty
         {
-            protected UArrayProperty ObjArrayProperty;
+            protected UArrayProperty ObjArrayProperty = new UArrayProperty();
             public async Task<UEProperty> GetInner()
             {
                 if (ObjArrayProperty.Empty())
@@ -932,7 +935,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
         // ReSharper disable once InconsistentNaming
         public class UEMapProperty : UEProperty
         {
-            protected UMapProperty ObjMapProperty;
+            protected UMapProperty ObjMapProperty = new UMapProperty();
 
             public async Task<UEProperty> GetKeyProperty()
             {
@@ -974,7 +977,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
         // ReSharper disable once InconsistentNaming
         public class UEDelegateProperty : UEProperty
         {
-            protected UDelegateProperty ObjDelegateProperty;
+            protected UDelegateProperty ObjDelegateProperty = new UDelegateProperty();
 
             public async Task<UEFunction> GetSignatureFunction()
             {
@@ -995,7 +998,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
         // ReSharper disable once InconsistentNaming
         public class UEMulticastDelegateProperty : UEProperty
         {
-            protected UDelegateProperty ObjDelegateProperty;
+            protected UDelegateProperty ObjDelegateProperty = new UDelegateProperty();
 
             public async Task<UEFunction> GetSignatureFunction()
             {
@@ -1016,7 +1019,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
         // ReSharper disable once InconsistentNaming
         public class UEEnumProperty : UEProperty
         {
-            protected UEnumProperty ObjEnumProperty;
+            protected UEnumProperty ObjEnumProperty = new UEnumProperty();
 
             public async Task<UENumericProperty> GetUnderlyingProperty()
             {
