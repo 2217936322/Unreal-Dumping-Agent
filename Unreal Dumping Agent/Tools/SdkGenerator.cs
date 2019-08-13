@@ -45,8 +45,8 @@ namespace Unreal_Dumping_Agent.Tools
             var ret = new GenRetInfo();
 
             // ToDo: Add some user message here like count, and some things like that
-            if (requestInfo.Context != null)
-                _sdkMessage = await requestInfo.Context.Channel.SendMessageAsync();
+            //if (requestInfo.Context != null)
+            //    _sdkMessage = await requestInfo.Context.Channel.SendMessageAsync();
 
             // Check Address
             if (!Utils.IsValidGNamesAddress(_gnames))
@@ -104,43 +104,26 @@ namespace Unreal_Dumping_Agent.Tools
         /// Collect all package on target game
         /// </summary>
         /// <returns>Return all Packages on the game as <see cref="GenericTypes.UEObject"/></returns>
-        private Task<List<GenericTypes.UEObject>> CollectPackages()
+        private List<GenericTypes.UEObject> CollectPackages()
         {
-            return Task.Run(() =>
-            {
-                var lockObj = new object();
+            var lockObj = new object();
 
-                var ret = ObjectsStore.GObjects.Objects
-                    .Where(curObj => curObj.IsValid())
+            var ret = ObjectsStore.GObjects.Objects
+                .AsParallel()
+                .Where(curObj => curObj.IsValid())
 
-                    // Get Package for every object
-                    .Select(curObj => curObj.GetPackageObject().Result)
-                    .Where(package => package.IsValid())
+                // Get Package for every object
+                .Select(curObj => curObj.GetPackageObject().Result)
+                .Where(package => package.IsValid())
 
-                    // Distinct
-                    .GroupBy(p => p.GetAddress())
-                    .Select(y => y.First())
-                    
-                    // To List
-                    .ToList();
+                // Distinct
+                .GroupBy(p => p.GetAddress())
+                .Select(y => y.First())
 
-                //Parallel.ForEach(ObjectsStore.GObjects.Objects, (curObj, state) =>
-                //{
-                //    if (!curObj.IsValid())
-                //        return;
+                // To List
+                .ToList();
 
-                //    var package = curObj.GetPackageObject().Result;
-                //    if (!package.IsValid())
-                //        return;
-
-                //    //lock (lockObj)
-                //    //    ret1.Add(package);
-                //});
-
-                // ret = ret.Distinct().ToList();
-
-                return ret;
-            });
+            return ret;
         }
 
         private async Task ProcessPackages()
@@ -149,7 +132,7 @@ namespace Unreal_Dumping_Agent.Tools
             var processedObjects = new Dictionary<IntPtr, bool>();
             var packageObjects = new List<GenericTypes.UEObject>();
 
-            packageObjects = await CollectPackages();
+            packageObjects = CollectPackages();
 
             #region CoreUObject
             {
@@ -191,7 +174,8 @@ namespace Unreal_Dumping_Agent.Tools
             #endregion
 
             var lockObj = new object();
-            Parallel.ForEach(packageObjects, (packObj, state) =>
+
+            foreach (var packObj in packageObjects)
             {
                 var package = new Package(packObj);
                 var processedObjectsTmp = package.Process(processedObjects).Result;
@@ -204,9 +188,7 @@ namespace Unreal_Dumping_Agent.Tools
 
                 Package.PackageMap[packObj] = package;
                 packages.Add(package);
-            });
-
-
+            }
         }
 
         private bool InitSdkLang()

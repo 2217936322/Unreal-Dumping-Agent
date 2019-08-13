@@ -216,30 +216,20 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
         }
 
         private static readonly Dictionary<string, int> _countCache = new Dictionary<string, int>();
-        public static Task<int> CountObjects<T>(string name) where T : UEObject, new()
+        public static int CountObjects<T>(string name) where T : UEObject, new()
         {
-            return Task.Run(() =>
+            if (_countCache.ContainsKey(name))
+                return _countCache[name];
+
+            lock (Utils.MainLocker)
             {
-                if (_countCache.ContainsKey(name))
-                    return _countCache[name];
+                int count = GObjects.Objects
+                    .Count(obj => obj.IsA<T>().Result && obj.GetName().Result == name);
 
-                int count = 0;
-                object lockObj = new object();
+                _countCache[name] = count;
+            }
 
-                Parallel.ForEach(GObjects.Objects, async obj =>
-                {
-                    if (!await obj.IsA<T>() || await obj.GetName() != name)
-                        return;
-
-                    lock (lockObj)
-                        count++;
-                });
-
-                lock (_countCache)
-                    _countCache[name] = count;
-
-                return count;
-            });
+            return _countCache[name];
         }
     }
 }

@@ -13,7 +13,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
 {
     public class GenericTypes : IEngineVersion
     {
-        [DebuggerDisplay("Address = {Object.ObjAddress.ToInt64().ToString(\"X8\")}, TypeID = {TypeId}")]
+        [DebuggerDisplay("Address = {Object.ObjAddress.ToInt64().ToString(\"X8\")}, TypeID = {TypeId}, Name = {ObjName}")]
         // ReSharper disable once InconsistentNaming
         public class UEObject : IUnrealStruct
         {
@@ -153,6 +153,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
                 return Package ?? (Package = await ObjectsStore.GetByAddress(Object.ObjAddress));
             }
 
+            // ToDo: Add Cache here to be faster
             public async Task<bool> IsA<T>() where T : UEObject, new()
             {
                 if (!IsValid())
@@ -401,7 +402,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
                 if (await IsA<UEByteProperty>())
                 {
                     InfoChanged = true;
-                    CurInfo = await ((UEByteProperty)this).GetInfo();
+                    CurInfo = await this.Cast<UEByteProperty>().GetInfo();
                 }
                 else if (await IsA<UEUInt16Property>())
                 {
@@ -451,37 +452,37 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
                 else if (await IsA<UEBoolProperty>())
                 {
                     InfoChanged = true;
-                    CurInfo = await ((UEBoolProperty)this).GetInfo();
+                    CurInfo = await this.Cast<UEBoolProperty>().GetInfo();
                 }
                 else if (await IsA<UEObjectProperty>())
                 {
                     InfoChanged = true;
-                    CurInfo = await ((UEObjectProperty)this).GetInfo();
+                    CurInfo = await this.Cast<UEObjectProperty>().GetInfo();
                 }
                 else if (await IsA<UEClassProperty>())
                 {
                     InfoChanged = true;
-                    CurInfo = await ((UEClassProperty)this).GetInfo();
+                    CurInfo = await this.Cast<UEClassProperty>().GetInfo();
                 }
                 else if (await IsA<UEInterfaceProperty>())
                 {
                     InfoChanged = true;
-                    CurInfo = await ((UEInterfaceProperty)this).GetInfo();
+                    CurInfo = await this.Cast<UEInterfaceProperty>().GetInfo();
                 }
                 else if (await IsA<UEWeakObjectProperty>())
                 {
                     InfoChanged = true;
-                    CurInfo = await ((UEWeakObjectProperty)this).GetInfo();
+                    CurInfo = await this.Cast<UEWeakObjectProperty>().GetInfo();
                 }
                 else if (await IsA<UELazyObjectProperty>())
                 {
                     InfoChanged = true;
-                    CurInfo = await ((UELazyObjectProperty)this).GetInfo();
+                    CurInfo = await this.Cast<UELazyObjectProperty>().GetInfo();
                 }
                 else if (await IsA<UEAssetObjectProperty>())
                 {
                     InfoChanged = true;
-                    CurInfo = await ((UEAssetObjectProperty)this).GetInfo();
+                    CurInfo = await this.Cast<UEAssetObjectProperty>().GetInfo();
                 }
                 else if (await IsA<UEAssetClassProperty>())
                 {
@@ -496,7 +497,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
                 else if (await IsA<UEStructProperty>())
                 {
                     InfoChanged = true;
-                    CurInfo = await ((UEStructProperty)this).GetInfo();
+                    CurInfo = await this.Cast<UEStructProperty>().GetInfo();
                 }
                 else if (await IsA<UEStrProperty>())
                 {
@@ -511,12 +512,12 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
                 else if (await IsA<UEArrayProperty>())
                 {
                     InfoChanged = true;
-                    CurInfo = await ((UEArrayProperty)this).GetInfo();
+                    CurInfo = await this.Cast<UEArrayProperty>().GetInfo();
                 }
                 else if (await IsA<UEMapProperty>())
                 {
                     InfoChanged = true;
-                    CurInfo = await ((UEMapProperty)this).GetInfo();
+                    CurInfo = await this.Cast<UEMapProperty>().GetInfo();
                 }
                 else if (await IsA<UEDelegateProperty>())
                 {
@@ -531,7 +532,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
                 else if (await IsA<UEEnumProperty>())
                 {
                     InfoChanged = true;
-                    CurInfo = await ((UEEnumProperty)this).GetInfo();
+                    CurInfo = await this.Cast<UEEnumProperty>().GetInfo();
                 }
 
                 return CurInfo;
@@ -1043,7 +1044,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
             }
             public new async Task<Info> GetInfo()
             {
-                return new Info(PropertyType.Primitive, sizeof(byte), false, MakeUniqueCppName(await GetEnum()));
+                return new Info(PropertyType.Primitive, sizeof(byte), false, await MakeUniqueCppName(await GetEnum()));
             }
         }
     }

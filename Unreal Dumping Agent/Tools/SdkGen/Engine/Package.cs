@@ -192,14 +192,15 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
             {
                 var outPackages = new List<GenericTypes.UEObject>();
                 var lockObj = new object();
-                Parallel.ForEach(ObjectsStore.GObjects.Objects, async (obj, state) =>
+
+                foreach (var obj in ObjectsStore.GObjects.Objects)
                 {
-                    if (packageObj != await obj.GetPackageObject())
-                        return;
+                    if (packageObj != obj.GetPackageObject().Result)
+                        continue;
 
                     lock (lockObj)
                         outPackages.Add(obj);
-                });
+                }
 
                 return outPackages;
             });
@@ -211,8 +212,11 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
         /// <returns>Return processedObjects</returns>
         public async Task<Dictionary<IntPtr, bool>> Process(Dictionary<IntPtr, bool> processedObjects)
         {
-            var objsInPack = await GetObjsInPack(_packageObj);
-            foreach (var obj in objsInPack)
+            var objsInPack = GetObjsInPack(_packageObj);
+            var enumTasks = new List<Task>();
+            var constTasks = new List<Task>();
+
+            foreach (var obj in await objsInPack)
             {
                 // IsA
                 var isEnumT = obj.IsA<GenericTypes.UEEnum>();
@@ -223,22 +227,20 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
                 // Checks
                 if (await isEnumT)
                 {
-                    await GenerateEnum(obj.Cast<GenericTypes.UEEnum>());
+                    enumTasks.Add(GenerateEnum(obj.Cast<GenericTypes.UEEnum>()));
                 }
-                else if (await isClassT)
-                {
-                    processedObjects = await GeneratePrerequisites(obj, processedObjects);
-                }
-                else if (await isSsT)
+                else if (await isClassT || await isSsT)
                 {
                     processedObjects = await GeneratePrerequisites(obj, processedObjects);
                 }
                 else if (await isConstT)
                 {
-                    await GenerateConst(obj.Cast<GenericTypes.UEConst>());
+                    constTasks.Add(GenerateConst(obj.Cast<GenericTypes.UEConst>()));
                 }
             }
 
+            Task.WaitAll(enumTasks.ToArray());
+            Task.WaitAll(constTasks.ToArray());
             return processedObjects;
         }
 
@@ -496,7 +498,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
         {
             var e = new Enum
             {
-                Name = NameValidator.MakeUniqueCppName(enumObj)
+                Name = await NameValidator.MakeUniqueCppName(enumObj)
             };
 
             if (e.Name.Contains("Default__") ||
@@ -530,20 +532,17 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
         /// Generates a constant.
         /// </summary>
         /// <param name="constObj">The constant object.</param>
-        private Task GenerateConst(GenericTypes.UEConst constObj)
+        private async Task GenerateConst(GenericTypes.UEConst constObj)
         {
-            return Task.Run(() =>
+            var name = await NameValidator.MakeUniqueCppName(constObj);
+
+            if (name.Contains("Default__") ||
+                name.Contains("PLACEHOLDER-CLASS"))
             {
-                var name = NameValidator.MakeUniqueCppName(constObj);
+                return;
+            }
 
-                if (name.Contains("Default__") ||
-                    name.Contains("PLACEHOLDER-CLASS"))
-                {
-                    return;
-                }
-
-                Constants.Add(new Constant { Name = name, Value = constObj.GetValue() });
-            });
+            Constants.Add(new Constant { Name = name, Value = constObj.GetValue() });
         }
 
         /// <summary>

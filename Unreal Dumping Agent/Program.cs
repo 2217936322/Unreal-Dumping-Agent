@@ -63,7 +63,7 @@ namespace Unreal_Dumping_Agent
             Utils.MemObj.SuspendProcess();
             JsonReflector.LoadJsonEngine("EngineBase");
 
-            await new SdkGenerator((IntPtr)0x7FF70D3B2B00, (IntPtr)0x7FF70D4CF1A8).Start(new AgentRequestInfo());
+            await new SdkGenerator((IntPtr)0x7FF7B5142B00, (IntPtr)0x7FF7B525F1A8).Start(new AgentRequestInfo());
 
             //var fPointer = new EngineClasses.UField();
             //await fPointer.ReadData((IntPtr)0x228E0C92B30);

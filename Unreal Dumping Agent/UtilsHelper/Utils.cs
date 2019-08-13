@@ -85,6 +85,7 @@ namespace Unreal_Dumping_Agent.UtilsHelper
         public static BotType BotWorkType;
         public static Memory.Memory MemObj;
         public static Scanner ScanObj;
+        public static object MainLocker = new object();
         #endregion
 
         #region Tool

@@ -50,15 +50,15 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
         {
             string name = string.Empty;
 
-            if (await ObjectsStore.CountObjects<T>(await t.GetName()) > 1)
+            if (ObjectsStore.CountObjects<T>(await t.GetName()) > 1)
                 name += $"{MakeValidName((await t.GetOuter()).GetName().Result)}_";
 
             return $"{name}{MakeValidName(await t.GetName())}";
         }
 
-        public static string MakeUniqueCppName(GenericTypes.UEConst c) => MakeUniqueCppNameImpl(c).Result;
-        public static string MakeUniqueCppName(GenericTypes.UEEnum e) => MakeUniqueCppNameImpl(e).Result;
-        public static string MakeUniqueCppName(GenericTypes.UEStruct ss) => MakeUniqueCppNameImpl(ss).Result;
+        public static async Task<string> MakeUniqueCppName(GenericTypes.UEConst c) => await MakeUniqueCppNameImpl(c);
+        public static async Task<string> MakeUniqueCppName(GenericTypes.UEEnum e) => await MakeUniqueCppNameImpl(e);
+        public static async Task<string> MakeUniqueCppName(GenericTypes.UEStruct ss) => await MakeUniqueCppNameImpl(ss);
 
     }
 }
