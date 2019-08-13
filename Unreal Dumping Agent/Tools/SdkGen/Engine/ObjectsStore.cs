@@ -224,7 +224,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
             lock (Utils.MainLocker)
             {
                 int count = GObjects.Objects
-                    .Count(obj => obj.IsA<T>().Result && obj.GetName().Result == name);
+                    .Count(obj => obj.GetName().Result == name && obj.IsA<T>().Result);
 
                 _countCache[name] = count;
             }

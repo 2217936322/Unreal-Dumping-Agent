@@ -186,8 +186,15 @@ namespace Unreal_Dumping_Agent.Tools
                 if (!package.Save().Result)
                     return;
 
-                Package.PackageMap[packObj] = package;
-                packages.Add(package);
+                try
+                {
+                    Package.PackageMap[packObj] = package;
+                    packages.Add(package);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                }
             }
         }
 
