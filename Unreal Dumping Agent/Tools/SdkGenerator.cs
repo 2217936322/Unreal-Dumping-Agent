@@ -144,7 +144,7 @@ namespace Unreal_Dumping_Agent.Tools
         /// <summary>
         /// Process All Packages
         /// </summary>
-        private async Task ProcessPackages()
+        private static async Task ProcessPackages()
         {
             var packages = new List<Package>();
             var packageObjects = CollectPackages();

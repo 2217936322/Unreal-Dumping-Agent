@@ -163,6 +163,26 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
 
             return await offsetL < await offsetR;
         }
+        public static bool PackageDependencyComparer(Package lhs, Package rhs)
+        {
+            if (rhs._dependencies.Empty())
+                return false;
+
+            if (rhs._dependencies.Any(o => o == lhs._packageObj))
+                return true;
+
+            foreach (var dep in rhs._dependencies)
+            {
+                var package = PackageMap[dep];
+                if (package == null)
+                    continue; // Missing package, should not occur...
+
+                if (PackageDependencyComparer(lhs, package))
+                    return true;
+            }
+
+            return false;
+        }
         #endregion
 
         /// <summary>
@@ -264,33 +284,6 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
 
             await Logger.Log($"Skip Empty:    {await _packageObj.GetFullName()}");
             return false;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="lhs"></param>
-        /// <param name="rhs"></param>
-        /// <returns></returns>
-        public static bool PackageDependencyComparer(Package lhs, Package rhs)
-        {
-            if (rhs._dependencies.Empty())
-                return false;
-
-            if (rhs._dependencies.Any(o => o == lhs._packageObj))
-                return true;
-
-            foreach (var dep in rhs._dependencies)
-            {
-                var package = PackageMap[dep];
-                if (package == null)
-                    continue; // Missing package, should not occur...
-
-                if (PackageDependencyComparer(lhs, package))
-                    return true;
-            }
-
-		    return false;
         }
 
         #region Generate

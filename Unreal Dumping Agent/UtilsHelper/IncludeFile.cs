@@ -13,7 +13,7 @@ namespace Unreal_Dumping_Agent.UtilsHelper
 
         public abstract string FileName { get; set; }
 
-        protected IncludeFile() : this((TLang)Program.Lang, Generator.SdkPath)
+        protected IncludeFile() : this((TLang)Generator.GenLang, Generator.SdkPath)
         {
         }
 
