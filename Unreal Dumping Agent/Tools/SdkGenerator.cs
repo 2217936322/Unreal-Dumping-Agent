@@ -1,10 +1,9 @@
-﻿using System;
+﻿using Discord.Rest;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using Discord.Rest;
 using Unreal_Dumping_Agent.Tools.SdkGen;
 using Unreal_Dumping_Agent.Tools.SdkGen.Engine;
 using Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4;
@@ -12,7 +11,7 @@ using Unreal_Dumping_Agent.UtilsHelper;
 
 namespace Unreal_Dumping_Agent.Tools
 {
-    
+
     public class SdkGenerator
     {
         #region Useful types
@@ -40,6 +39,11 @@ namespace Unreal_Dumping_Agent.Tools
             _gnames = gnames;
         }
 
+        /// <summary>
+        /// Start Dumping Packages On Target Process<para/>
+        /// As Programming Lang Code.
+        /// </summary>
+        /// <param name="requestInfo">Information About User</param>
         public async Task<GenRetInfo> Start(AgentRequestInfo requestInfo)
         {
             var ret = new GenRetInfo();
@@ -72,15 +76,15 @@ namespace Unreal_Dumping_Agent.Tools
             //MODULEENTRY32 mod = { };
             //Utils::MemoryObj->GetModuleInfo(startInfo.GameModule, mod);
 
+            Directory.CreateDirectory(Path.Combine(Program.SdkGenPath, "SDK"));
+
             Generator.GameName = "GameName";
             Generator.GameVersion = "1.0.0";
             Generator.SdkType = SdkType.Internal;
             Generator.IsGObjectsChunks = ObjectsStore.GObjects.IsChunksAddress;
-            Generator.SdkLang = "Cpp";
+            Generator.SdkLangName = "Cpp";
             Generator.GameModule = "GameModule";
             Generator.GameModuleBase = (IntPtr)0x0;
-
-            Directory.CreateDirectory(Path.Combine(Program.SdkGenPath, "SDK"));
 
             if (!InitSdkLang())
                 return new GenRetInfo { State = GeneratorState.BadSdkLang };
@@ -104,10 +108,8 @@ namespace Unreal_Dumping_Agent.Tools
         /// Collect all package on target game
         /// </summary>
         /// <returns>Return all Packages on the game as <see cref="GenericTypes.UEObject"/></returns>
-        private List<GenericTypes.UEObject> CollectPackages()
+        private static List<GenericTypes.UEObject> CollectPackages()
         {
-            var lockObj = new object();
-
             var ret = ObjectsStore.GObjects.Objects
                 .AsParallel()
                 .Where(curObj => curObj.IsValid())
@@ -126,13 +128,26 @@ namespace Unreal_Dumping_Agent.Tools
             return ret;
         }
 
+        /// <summary>
+        /// Init Selected SdkLang
+        /// </summary>
+        private static bool InitSdkLang()
+        {
+            // Check if this lang is supported
+            if (!Program.SupportedLangs.ContainsKey(Generator.SdkLangName))
+                return false;
+
+            Generator.GenLang = Program.SupportedLangs[Generator.SdkLangName];
+            return Generator.GenLang.Init();
+        }
+
+        /// <summary>
+        /// Process All Packages
+        /// </summary>
         private async Task ProcessPackages()
         {
             var packages = new List<Package>();
-            var processedObjects = new Dictionary<IntPtr, bool>();
-            var packageObjects = new List<GenericTypes.UEObject>();
-
-            packageObjects = CollectPackages();
+            var packageObjects = CollectPackages();
 
             #region CoreUObject
             {
@@ -160,7 +175,7 @@ namespace Unreal_Dumping_Agent.Tools
 
                 // Process CoreUObject
                 var package = new Package(coreUObject);
-                processedObjects = await package.Process(processedObjects);
+                await package.Process();
 
                 if (await package.Save())
                 {
@@ -173,46 +188,47 @@ namespace Unreal_Dumping_Agent.Tools
             }
             #endregion
 
-            var lockObj = new object();
-
+            #region Packages
             foreach (var packObj in packageObjects)
             {
                 var package = new Package(packObj);
-                var processedObjectsTmp = package.Process(processedObjects).Result;
+                await package.Process();
 
-                lock (lockObj)
-                    processedObjects = processedObjectsTmp;
-
-                if (!package.Save().Result)
+                if (!await package.Save())
                     return;
 
-                try
+                Package.PackageMap[packObj] = package;
+                packages.Add(package);
+            }
+
+            if (!packages.Empty())
+            {
+                for (int i = 0; i < packages.Count - 1; i++)
                 {
-                    Package.PackageMap[packObj] = package;
-                    packages.Add(package);
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e);
+                    for (int j = 0; j < packages.Count - i - 1; j++)
+                    {
+                        if (!Package.PackageDependencyComparer(packages[j], packages[j + 1]))
+                            packages = packages.Swap(j, j + 1);
+                    }
                 }
             }
+            #endregion
+
+            SdkAfterFinish(packages);
         }
 
-        private bool InitSdkLang()
+        /// <summary>
+        /// Called After All Of Packages Proceed 
+        /// </summary>
+        private static void SdkAfterFinish(List<Package> packages)
         {
-            // Check if this lang is supported
-            if (!Program.SupportedLangs.ContainsKey(Generator.SdkLang))
-                return false;
+            var missing = Package.ProcessedObjects.Where(kv => !kv.Value).ToList();
+            var missedList = new List<GenericTypes.UEStruct>();
 
-            Program.Lang = Program.SupportedLangs[Generator.SdkLang];
-            Program.Lang.Init();
+            if (!missing.Empty())
+                missedList = missing.Select(kv => ObjectsStore.GetByAddress(kv.Key).Result.Cast<GenericTypes.UEStruct>()).ToList();
 
-            return true;
-        }
-
-        private void SdkAfterFinish()
-        {
-            // Program.Lang.SdkAfterFinish(_packageObj, );
+            Generator.GenLang.SdkAfterFinish(packages, missedList);
         }
     }
 }

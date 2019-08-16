@@ -556,6 +556,11 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Langs
             // Write the file
             IncludeFile<CppLang>.AppendToSdk(Generator.SdkPath, fileName, text);
         }
+        public override async Task SaveConstants(Package package)
+        {
+            
+        }
+
         public override async Task SdkAfterFinish(List<Package> packages, List<GenericTypes.UEStruct> missing)
         {
             // Copy Include File

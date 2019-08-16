@@ -42,8 +42,7 @@ namespace Unreal_Dumping_Agent
         private readonly List<UsersInfo> _knownUsers = new List<UsersInfo>();
 
         #region SdkLang
-        public static SdkLang Lang { get; set; }
-        public static Dictionary<string, SdkLang> SupportedLangs = new Dictionary<string, SdkLang>()
+        public static Dictionary<string, SdkLang> SupportedLangs = new Dictionary<string, SdkLang>
         {
             { "Cpp", new CppLang() }
         };
@@ -63,7 +62,7 @@ namespace Unreal_Dumping_Agent
             Utils.MemObj.SuspendProcess();
             JsonReflector.LoadJsonEngine("EngineBase");
 
-            await new SdkGenerator((IntPtr)0x7FF63DF92B00, (IntPtr)0x7FF63E0AF1A8).Start(new AgentRequestInfo());
+            await new SdkGenerator((IntPtr)0x7FF6BE032B00, (IntPtr)0x7FF6BE14F1A8).Start(new AgentRequestInfo());
 
             //var fPointer = new EngineClasses.UField();
             //await fPointer.ReadData((IntPtr)0x228E0C92B30);

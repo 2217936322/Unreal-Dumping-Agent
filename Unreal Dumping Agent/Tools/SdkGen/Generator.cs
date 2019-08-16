@@ -22,7 +22,8 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
 
         public static SdkType SdkType { get; set; }
         public static string NameSpace { get; set; } = "Sdk";
-        public static string SdkLang { get; set; }
+        public static string SdkLangName { get; set; }
+        public static SdkLang GenLang { get; set; }
         public static string LangPaths { get; set; }
         public static string SdkPath { get; set; }
         public static bool ShouldDumpArrays { get; set; } = false;

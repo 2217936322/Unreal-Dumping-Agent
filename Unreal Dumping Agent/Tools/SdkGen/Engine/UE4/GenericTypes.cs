@@ -17,6 +17,24 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
         // ReSharper disable once InconsistentNaming
         public class UEObject : IUnrealStruct
         {
+            protected bool Equals(UEObject other)
+            {
+                return Equals(Object, other.Object);
+            }
+
+            public override bool Equals(object obj)
+            {
+                if (ReferenceEquals(null, obj)) return false;
+                if (ReferenceEquals(this, obj)) return true;
+                if (obj.GetType() != this.GetType()) return false;
+                return Equals((UEObject) obj);
+            }
+
+            public override int GetHashCode()
+            {
+                return (Object != null ? Object.GetHashCode() : 0);
+            }
+
             protected UClass ObjClass { get; set; } 
             protected UEObject Outer { get; set; }
             protected UEObject Package { get; set; }
@@ -201,24 +219,6 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
 
             public static bool operator ==(UEObject lhs, UEObject rhs) => lhs?.GetAddress() == rhs?.GetAddress();
             public static bool operator !=(UEObject lhs, UEObject rhs) => lhs?.GetAddress() != rhs?.GetAddress();
-
-            #region Auto Genrated Equals Overrides
-            protected bool Equals(UEObject other)
-            {
-                return Equals(ObjClass, other.ObjClass) && Equals(Outer, other.Outer) && Equals(Package, other.Package) && string.Equals(ObjName, other.ObjName) && string.Equals(FullName, other.FullName) && string.Equals(NameCpp, other.NameCpp) && Equals(Object, other.Object);
-            }
-            public override bool Equals(object obj)
-            {
-                if (ReferenceEquals(null, obj)) return false;
-                if (ReferenceEquals(this, obj)) return true;
-                if (obj.GetType() != this.GetType()) return false;
-                return Equals((UEObject)obj);
-            }
-            public override int GetHashCode()
-            {
-                return 0x1997; // Yeah it's my burn year xD
-            }
-            #endregion
         }
 
         // ReSharper disable once InconsistentNaming

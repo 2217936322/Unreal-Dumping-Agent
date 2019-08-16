@@ -17,7 +17,11 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
     public class Package
 #pragma warning restore 660,661
     {
-        public static Dictionary<GenericTypes.UEObject, Package> PackageMap = new Dictionary<GenericTypes.UEObject, Package>();
+        public static Dictionary<GenericTypes.UEObject, Package> PackageMap { get; } = new Dictionary<GenericTypes.UEObject, Package>();
+        public static Dictionary<IntPtr, bool> ProcessedObjects { get; private set; }
+
+        private readonly GenericTypes.UEObject _packageObj;
+        private readonly List<GenericTypes.UEObject> _dependencies;
 
         public List<Constant> Constants { get; }
         public List<Class> Classes { get; }
@@ -140,27 +144,9 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
 
         #endregion
 
-        private readonly GenericTypes.UEObject _packageObj;
-        private readonly List<GenericTypes.UEObject> _dependencies;
-
-        /// <summary>
-        /// Constructor.
-        /// </summary>
-        /// <param name="packageObj">The package object.</param>
-        public Package(GenericTypes.UEObject packageObj)
-        {
-            _packageObj = packageObj;
-            _dependencies = new List<GenericTypes.UEObject>();
-
-            Constants = new List<Constant>();
-            Classes = new List<Class>();
-            ScriptStructs = new List<ScriptStruct>();
-            Enums = new List<Enum>();
-        }
-
+        #region Operators
         public static bool operator ==(Package lhs, Package rhs) => lhs?._packageObj.GetAddress() == rhs?._packageObj.GetAddress();
         public static bool operator !=(Package lhs, Package rhs) => !(lhs == rhs);
-
         public static async Task<bool> ComparePropertyLess(GenericTypes.UEProperty lhs, GenericTypes.UEProperty rhs)
         {
             var offsetL = lhs.GetOffset();
@@ -176,6 +162,23 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
             }
 
             return await offsetL < await offsetR;
+        }
+        #endregion
+
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="packageObj">The package object.</param>
+        public Package(GenericTypes.UEObject packageObj)
+        {
+            _packageObj = packageObj;
+            _dependencies = new List<GenericTypes.UEObject>();
+
+            Constants = new List<Constant>();
+            Classes = new List<Class>();
+            ScriptStructs = new List<ScriptStruct>();
+            Enums = new List<Enum>();
+            ProcessedObjects = new Dictionary<IntPtr, bool>();
         }
 
         /// <summary>
@@ -210,11 +213,9 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
         /// Process the classes the package contains.
         /// </summary>
         /// <returns>Return processedObjects</returns>
-        public async Task<Dictionary<IntPtr, bool>> Process(Dictionary<IntPtr, bool> processedObjects)
+        public async Task Process()
         {
             var objsInPack = GetObjsInPack(_packageObj);
-            var enumTasks = new List<Task>();
-            var constTasks = new List<Task>();
 
             foreach (var obj in await objsInPack)
             {
@@ -227,25 +228,21 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
                 // Checks
                 if (await isEnumT)
                 {
-                    enumTasks.Add(GenerateEnum(obj.Cast<GenericTypes.UEEnum>()));
+                    await GenerateEnum(obj.Cast<GenericTypes.UEEnum>());
                 }
                 else if (await isClassT || await isSsT)
                 {
-                    processedObjects = await GeneratePrerequisites(obj, processedObjects);
+                    await GeneratePrerequisites(obj);
                 }
                 else if (await isConstT)
                 {
-                    constTasks.Add(GenerateConst(obj.Cast<GenericTypes.UEConst>()));
+                    await GenerateConst(obj.Cast<GenericTypes.UEConst>());
                 }
             }
-
-            Task.WaitAll(enumTasks.ToArray());
-            Task.WaitAll(constTasks.ToArray());
-            return processedObjects;
         }
 
         /// <summary>
-        /// Saves the package classes as C++ code.
+        /// Saves the package classes as SdkLang code.
         /// Files are only generated if there is code present or the generator forces the generation of empty files.
         /// </summary>
         /// <returns>true if files got saved, else false.</returns>
@@ -269,6 +266,33 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
             return false;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="lhs"></param>
+        /// <param name="rhs"></param>
+        /// <returns></returns>
+        public static bool PackageDependencyComparer(Package lhs, Package rhs)
+        {
+            if (rhs._dependencies.Empty())
+                return false;
+
+            if (rhs._dependencies.Any(o => o == lhs._packageObj))
+                return true;
+
+            foreach (var dep in rhs._dependencies)
+            {
+                var package = PackageMap[dep];
+                if (package == null)
+                    continue; // Missing package, should not occur...
+
+                if (PackageDependencyComparer(lhs, package))
+                    return true;
+            }
+
+		    return false;
+        }
+
         #region Generate
         private bool AddDependency(GenericTypes.UEObject package)
         {
@@ -286,75 +310,68 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
         /// Should be a UEClass or UEScriptStruct.
         /// </summary>
         /// <param name="obj">The object.</param>
-        /// <param name="processedObjects">[IN] Processed Objects</param>
         /// <returns>Return Processed Objects</returns>
-        private async Task<Dictionary<IntPtr, bool>> GeneratePrerequisites(GenericTypes.UEObject obj, Dictionary<IntPtr, bool> processedObjects)
+        private async Task GeneratePrerequisites(GenericTypes.UEObject obj)
         {
             if (!obj.IsValid())
-                return processedObjects;
+                return;
 
             var isClassT = obj.IsA<GenericTypes.UEClass>();
             var isScriptStructT = obj.IsA<GenericTypes.UEClass>();
 
             if (!await isClassT && !await isScriptStructT)
-                return processedObjects;
+                return;
 
             string name = await obj.GetName();
             if (name.Contains("Default__") ||
                 name.Contains("<uninitialized>") ||
                 name.Contains("PLACEHOLDER-CLASS"))
             {
-                return processedObjects;
+                return;
             }
 
-            if (!processedObjects.ContainsKey(obj.GetAddress()))
-                processedObjects[obj.GetAddress()] = false;
+            if (!ProcessedObjects.ContainsKey(obj.GetAddress()))
+                ProcessedObjects[obj.GetAddress()] = false;
 
-            processedObjects[obj.GetAddress()] = processedObjects[obj.GetAddress()] | false;
+            ProcessedObjects[obj.GetAddress()] = ProcessedObjects[obj.GetAddress()] | false;
 
             var classPackage = await obj.GetPackageObject();
             if (!classPackage.IsValid())
-                return processedObjects;
+                return;
 
             if (AddDependency(classPackage))
-                return processedObjects;
+                return;
 
-            if (processedObjects[obj.GetAddress()])
-                return processedObjects;
+            if (ProcessedObjects[obj.GetAddress()])
+                return;
 
-            processedObjects[obj.GetAddress()] = true;
+            ProcessedObjects[obj.GetAddress()] = true;
 
             // Outer
             var outer = await obj.GetOuter();
             if (outer.IsValid() && outer != obj)
-                processedObjects = await GeneratePrerequisites(outer, processedObjects);
+                await GeneratePrerequisites(outer);
 
             // Super
             var structObj = obj.Cast<GenericTypes.UEStruct>();
             var super = await structObj.GetSuper();
             if (super.IsValid() && super != obj)
-                processedObjects = await GeneratePrerequisites(super, processedObjects);
-
-            // this async because after we don't need processedObjects until return
-            // so just Generate Class and Structs at same time `GenerateMemberPrerequisites` works
-            var processedObjectsT = GenerateMemberPrerequisites((await structObj.GetChildren()).Cast<GenericTypes.UEProperty>(), processedObjects);
+                await GeneratePrerequisites(super);
 
             if (await isClassT)
                 await GenerateClass(obj.Cast<GenericTypes.UEClass>());
             else
                 await GenerateScriptStruct(obj.Cast<GenericTypes.UEScriptStruct>());
 
-            processedObjects = await processedObjectsT;
-            return processedObjects;
+            await GenerateMemberPrerequisites((await structObj.GetChildren()).Cast<GenericTypes.UEProperty>());
         }
 
         /// <summary>
         /// Checks and generates the prerequisites of the members.
         /// </summary>
         /// <param name="first">The first member in the chain.</param>
-        /// <param name="processedObjects">[IN] Processed Objects</param>
         /// <returns>Return Processed Objects</returns>
-        private async Task<Dictionary<IntPtr, bool>> GenerateMemberPrerequisites(GenericTypes.UEProperty first, Dictionary<IntPtr, bool> processedObjects)
+        private async Task GenerateMemberPrerequisites(GenericTypes.UEProperty first)
         {
             for (GenericTypes.UEProperty prop = first; prop.IsValid(); prop = (await prop.GetNext()).Cast<GenericTypes.UEProperty>())
             {
@@ -376,7 +393,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
                         break;
 
                     case GenericTypes.UEProperty.PropertyType.CustomStruct:
-                        processedObjects = await GeneratePrerequisites(await prop.Cast<GenericTypes.UEStructProperty>().GetStruct(), processedObjects);
+                        await GeneratePrerequisites(await prop.Cast<GenericTypes.UEStructProperty>().GetStruct());
                         break;
 
                     case GenericTypes.UEProperty.PropertyType.Container:
@@ -393,10 +410,9 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
                             innerProperties.Add(await mapProp.GetValueProperty());
                         }
 
-                        // ToDo: Check Here
-                        processedObjects = innerProperties
-                            .Where(p => p.GetInfo().Result.Type == GenericTypes.UEProperty.PropertyType.CustomStruct)
-                            .Aggregate(processedObjects, (current, innerProp) => GeneratePrerequisites(innerProp.Cast<GenericTypes.UEStructProperty>().GetStruct().Result, current).Result);
+
+                        foreach (var innerProp in innerProperties.Where(p => p.GetInfo().Result.Type == GenericTypes.UEProperty.PropertyType.CustomStruct))
+                            await GeneratePrerequisites(await innerProp.Cast<GenericTypes.UEStructProperty>().GetStruct());
 
                         break;
 
@@ -409,13 +425,11 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
                         if (await prop.IsA<GenericTypes.UEFunction>())
                         {
                             var function = prop.Cast<GenericTypes.UEFunction>();
-                            processedObjects = await GenerateMemberPrerequisites((await function.GetChildren()).Cast<GenericTypes.UEProperty>(), processedObjects);
+                            await GenerateMemberPrerequisites((await function.GetChildren()).Cast<GenericTypes.UEProperty>());
                         }
                         break;
                 }
             }
-
-            return processedObjects;
         }
 
         /// <summary>
@@ -964,22 +978,10 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
         #endregion
 
         #region SavePackage
-        private void SaveStructs()
-        {
-            Program.Lang.SaveStructs(this);
-        }
-        private void SaveClasses()
-        {
-            Program.Lang.SaveClasses(this);
-        }
-        private void SaveFunctions()
-        {
-            Program.Lang.SaveFunctions(this);
-        }
-        private void SaveConstants()
-        {
-
-        }
+        private void SaveStructs() => Generator.GenLang.SaveStructs(this);
+        private void SaveClasses() => Generator.GenLang.SaveClasses(this);
+        private void SaveFunctions() => Generator.GenLang.SaveFunctions(this);
+        private void SaveConstants() => Generator.GenLang.SaveConstants(this);
         #endregion
     }
 }
