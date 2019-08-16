@@ -53,3 +53,14 @@ that's my process||CorrM||102
 my process||CorrM||102
 set my target||CorrM||102
 set my process||CorrM||102
+
+// QuestionType == SdkDump
+dump this process||CorrM||103
+generate dump||CorrM||103
+gen dump||CorrM||103
+can you dump this process||CorrM||103
+dump this process||CorrM||103
+generate sdk||CorrM||103
+generate sdk dump||CorrM||103
+gen sdk dump||CorrM||103
+create sdk||CorrM||103

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Discord;
 
 namespace Unreal_Dumping_Agent.Discord.Misc
 {
@@ -10,8 +11,12 @@ namespace Unreal_Dumping_Agent.Discord.Misc
     }
     public class UsersInfo
     {
-        public ulong Id { get; set; }
-        public string Ip { get; set; }
+        public ulong ID { get; set; }
+        public string IP { get; set; }
+
         public UserOrder LastOrder { get; set; }
+
+        public IntPtr GnamesPtr { get; set; }
+        public IntPtr GobjectsPtr { get; set; }
     }
 }

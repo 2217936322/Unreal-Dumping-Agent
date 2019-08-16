@@ -14,17 +14,22 @@ namespace Unreal_Dumping_Agent.Discord
     {
         private const string BotToken = "NjAxNjM4NjY1NTg4MDQ3OTEw.XTFNxA.nGeHiWe-ZAG89DsF98RbR-X9bKE"; // Add to settings file
         public delegate Task MessageReceived(SocketUserMessage message, SocketCommandContext context);
+        public delegate Task ReactionReceived(SocketReaction reaction);
+
         public event MessageReceived MessageHandler;
+        public event ReactionReceived ReactionAddedHandler;
+        public event ReactionReceived ReactionRemovedHandler;
+
+        public DiscordSocketClient Client { get; private set; }
+        public SocketUser CurrentBot => Client.GetUser(Client.CurrentUser.Id);
 
         private bool _init;
-        private DiscordSocketClient _client;
         private CommandService _commands;
 
-        public SocketSelfUser CurrentBot => _client.CurrentUser;
         public async Task Init()
         {
             // Config
-            _client = new DiscordSocketClient(new DiscordSocketConfig()
+            Client = new DiscordSocketClient(new DiscordSocketConfig()
             {
                 LogLevel = Utils.IsDebug() ? LogSeverity.Debug : LogSeverity.Error
             });
@@ -39,9 +44,12 @@ namespace Unreal_Dumping_Agent.Discord
             await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), null);
 
             // Events
-            _client.MessageReceived += Client_MessageReceived;
-            _client.Ready += Client_Ready;
-            _client.Log += Client_Log;
+            Client.MessageReceived += Client_MessageReceived;
+            Client.ReactionAdded += (cacheAble, channel, reaction) => Task.Run(() => ReactionAddedHandler?.Invoke(reaction));
+            Client.ReactionRemoved += (cacheAble, channel, reaction) => Task.Run(() => ReactionRemovedHandler?.Invoke(reaction));
+
+            Client.Ready += Client_Ready;
+            Client.Log += Client_Log;
             _init = true;
         }
         public async void Start()
@@ -50,8 +58,8 @@ namespace Unreal_Dumping_Agent.Discord
                 throw new Exception("Call Init function first.!!");
 
             // Setup
-            await _client.LoginAsync(TokenType.Bot, BotToken);
-            await _client.StartAsync();
+            await Client.LoginAsync(TokenType.Bot, BotToken);
+            await Client.StartAsync();
         }
 
         private static async Task Client_Log(LogMessage message)
@@ -61,12 +69,12 @@ namespace Unreal_Dumping_Agent.Discord
         }
         private async Task Client_Ready()
         {
-            await _client.SetGameAsync("Dumping");
+            await Client.SetGameAsync("Dumping");
         }
         private async Task Client_MessageReceived(SocketMessage messageParam)
         {
             var message = (SocketUserMessage)messageParam;
-            var context = new SocketCommandContext(_client, message);
+            var context = new SocketCommandContext(Client, message);
 
             // Bad ??
             if (context.Message == null || string.IsNullOrEmpty(context.Message.Content)) return;

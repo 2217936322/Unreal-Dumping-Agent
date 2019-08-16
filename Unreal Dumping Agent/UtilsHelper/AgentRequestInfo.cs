@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using Unreal_Dumping_Agent.Discord.Misc;

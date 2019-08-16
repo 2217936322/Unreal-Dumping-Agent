@@ -12,7 +12,8 @@ namespace Unreal_Dumping_Agent.Chat
         Ask = 4,
         Funny = 5,
         Find = 101,
-        LockProcess = 102
+        LockProcess = 102,
+        SdkDump = 103
     }
     public enum EQuestionTask
     {
