@@ -115,11 +115,10 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
 
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
         // ReSharper disable once InconsistentNaming
-        public class TPersistentObjectPtr<TObjectId>
+        public class TPersistentObjectPtr
         {
             public FWeakObjectPtr WeakPtr;
             public int TagAtLastTest;
-            public TObjectId ObjectId;
         }
         #endregion
 
@@ -171,15 +170,15 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
         }
 
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
-        public class FAssetPtr : TPersistentObjectPtr<FStringAssetReference>
+        public class FAssetPtr : TPersistentObjectPtr
         {
-            
+            public FStringAssetReference ObjectId;
         }
 
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
-        public class FLazyObjectPtr : TPersistentObjectPtr<FStringAssetReference>
+        public class FLazyObjectPtr : TPersistentObjectPtr
         {
-
+            public FStringAssetReference ObjectId;
         }
 
         [StructLayout(LayoutKind.Sequential, Pack = 1)]

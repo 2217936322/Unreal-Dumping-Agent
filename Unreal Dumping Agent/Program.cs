@@ -49,7 +49,7 @@ namespace Unreal_Dumping_Agent
 
         #region Paths
         public static string LangsPath => Path.Combine(Environment.CurrentDirectory, "Config", "Langs");
-        public static string SdkGenPath => Path.Combine(Environment.CurrentDirectory, "Dump");
+        public static string GenPath => Path.Combine(Environment.CurrentDirectory, "Dump");
         #endregion
 
         private static void Main() => new Program().MainAsync().GetAwaiter().GetResult();
@@ -61,7 +61,7 @@ namespace Unreal_Dumping_Agent
             Utils.MemObj.SuspendProcess();
             JsonReflector.LoadJsonEngine("EngineBase");
 
-            await new SdkGenerator((IntPtr)0x7FF6BE032B00, (IntPtr)0x7FF6BE14F1A8).Start(new AgentRequestInfo());
+            await new SdkGenerator((IntPtr)0x7FF7CAB32B00, (IntPtr)0x7FF7CAC4F1A8).Start(new AgentRequestInfo());
 
             //var fPointer = new EngineClasses.UField();
             //await fPointer.ReadData((IntPtr)0x228E0C92B30);
@@ -77,8 +77,8 @@ namespace Unreal_Dumping_Agent
 
         private async Task MainAsync()
         {
-            //await Test();
-            //return;
+            await Test();
+            return;
 
             // Init
             Utils.BotWorkType = Utils.BotType.Local;

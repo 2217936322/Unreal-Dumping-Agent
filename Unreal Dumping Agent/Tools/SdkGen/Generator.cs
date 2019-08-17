@@ -86,9 +86,10 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
             // BacChar
             _badChars = new Dictionary<string, string>
             {
-                { ",", ""},
-                { "!", ""},
-                { "-", ""}
+                { ",", "" },
+                { "!", "" },
+                { "-", "" },
+                { "`", "" }
             };
 
             // AlignasClasses
@@ -159,7 +160,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
             };
             _predefinedMethods["Class CoreUObject.Object"] = new List<PredefinedMethod>
             {
-                PredefinedMethod.Inline(@"static inline TUObjectArray& GetGlobalObjects()
+                PredefinedMethod.Inline(@"	static inline TUObjectArray& GetGlobalObjects()
 	{
 		return GObjects->ObjObjects;
 	}"),
@@ -199,7 +200,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
 
 	return name;
 }"),
-                PredefinedMethod.Inline(@"template<typename T>
+                PredefinedMethod.Inline(@"	template<typename T>
 	static T* FindObject(const std::string& name)
 	{
 		for (int i = 0; i < GetGlobalObjects().Num(); ++i)
@@ -283,7 +284,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
 	{
 		return FindObject<UClass>(name);
 	}"),
-                PredefinedMethod.Inline(@"template<typename T>
+                PredefinedMethod.Inline(@"	template<typename T>
 	static T* GetObjectCasted(std::size_t index)
 	{
 		return static_cast<T*>(GetGlobalObjects().GetByIndex(index));

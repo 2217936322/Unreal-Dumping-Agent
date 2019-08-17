@@ -141,7 +141,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
 		            name += "F";
                 }
 
-                name += GetName();
+                name += await GetName();
                 NameCpp = name;
 
                 return NameCpp;
@@ -697,15 +697,15 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
 
             public async Task<List<int>> GetMissingBitsCount(UEBoolProperty other)
             {
+                // If there is no previous bitfield member, just calculate the missing bits.
+                if (!other.IsValid())
+                    return new List<int> { Utils.GetBitPosition(await GetByteMask()), -1 };
+
                 var byteMask = GetByteMask();
                 var offset = GetOffset();
 
                 var otherByteMask = other.GetByteMask();
                 var otherOffset = other.GetOffset();
-
-                // If there is no previous bitfield member, just calculate the missing bits.
-                if (!other.IsValid())
-                    return new List<int> { Utils.GetBitPosition(await byteMask), -1 };
 
                 // If both bitfield member belong to the same byte, calculate the bit position difference.
                 if (await offset == await otherOffset)

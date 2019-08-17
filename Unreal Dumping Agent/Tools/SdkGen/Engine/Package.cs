@@ -447,7 +447,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
             if (alignment == 0)
                 ss.NameCppFull += $"alignas({alignment}) ";
 
-            ss.NameCppFull += NameValidator.MakeUniqueCppName(scriptStructObj);
+            ss.NameCppFull += await NameValidator.MakeUniqueCppName(scriptStructObj);
             ss.Size = await scriptStructObj.GetPropertySize();
             ss.InheritedSize = 0;
 
@@ -457,7 +457,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
             if (super.IsValid() && super != scriptStructObj)
             {
                 ss.InheritedSize = offset = await scriptStructObj.GetPropertySize();
-                ss.NameCppFull += $" : public {NameValidator.MakeUniqueCppName(super.Cast<GenericTypes.UEScriptStruct>())}";
+                ss.NameCppFull += $" : public {await NameValidator.MakeUniqueCppName(super.Cast<GenericTypes.UEScriptStruct>())}";
             }
 
             var properties = new List<GenericTypes.UEProperty>();
@@ -567,7 +567,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
             var logTask = Logger.Log($"Class:   {await GetName() + "." + c.Name,-85} - instance: 0x{classObj.GetAddress().ToInt64():X8}");
 
             c.NameCpp = NameValidator.MakeValidName(await classObj.GetNameCpp());
-            c.NameCppFull = $"Class {c.NameCpp}";
+            c.NameCppFull = $"class {c.NameCpp}";
 
             c.Size = await classObj.GetPropertySize();
             c.InheritedSize = 0;
@@ -609,7 +609,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
                         Size = 0,
                         Name = prop.Name,
                         Type = prop.Type,
-                        IsStatic = true,
+                        IsStatic = false,
                         Comment = "NOT AUTO-GENERATED PROPERTY"
                     };
                     c.Members.Add(p);
@@ -781,8 +781,6 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
             {
                 if (offset < await prop.GetOffset())
                 {
-                    
-
                     int size = await prop.GetOffset() - offset;
                     members.Add(CreatePadding(unknownDataCounter++, offset, size, "MISSED OFFSET"));
                 }

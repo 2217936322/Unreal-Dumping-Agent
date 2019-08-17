@@ -76,8 +76,8 @@ namespace Unreal_Dumping_Agent.Tools
             //MODULEENTRY32 mod = { };
             //Utils::MemoryObj->GetModuleInfo(startInfo.GameModule, mod);
 
-            Directory.CreateDirectory(Path.Combine(Program.SdkGenPath, "SDK"));
-
+            Generator.SdkPath = Path.Combine(Program.GenPath, "SDK");
+            Generator.LangPaths = Program.LangsPath;
             Generator.GameName = "GameName";
             Generator.GameVersion = "1.0.0";
             Generator.SdkType = SdkType.Internal;
@@ -85,6 +85,8 @@ namespace Unreal_Dumping_Agent.Tools
             Generator.SdkLangName = "Cpp";
             Generator.GameModule = "GameModule";
             Generator.GameModuleBase = (IntPtr)0x0;
+
+            Directory.CreateDirectory(Generator.SdkPath);
 
             if (!InitSdkLang())
                 return new GenRetInfo { State = GeneratorState.BadSdkLang };

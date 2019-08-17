@@ -35,7 +35,8 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
                 .Replace('"', '_')
                 .Replace('%', '_');
 
-            if (string.IsNullOrEmpty(name)) return name;
+            if (string.IsNullOrEmpty(name))
+                return name;
 
             if (char.IsDigit(name[0]))
                 name = '_' + name;
