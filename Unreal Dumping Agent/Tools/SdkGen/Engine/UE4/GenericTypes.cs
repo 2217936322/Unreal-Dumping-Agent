@@ -21,7 +21,6 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
             {
                 return Equals(Object, other.Object);
             }
-
             public override bool Equals(object obj)
             {
                 if (ReferenceEquals(null, obj)) return false;
@@ -29,7 +28,6 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
                 if (obj.GetType() != this.GetType()) return false;
                 return Equals((UEObject) obj);
             }
-
             public override int GetHashCode()
             {
                 return (Object != null ? Object.GetHashCode() : 0);
@@ -115,8 +113,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
                 if (!NameCpp.Empty())
                     return NameCpp;
 
-                string name = string.Empty;
-                if (IsA<UEClass>().Result)
+                if (await IsA<UEClass>())
                 {
                     var c = this.Cast<UEClass>();
                     while (c.IsValid())
@@ -124,12 +121,12 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
                         string className = await c.GetName();
                         if (className == "Actor")
                         {
-                            name += "A";
+                            NameCpp += "A";
                             break;
                         }
                         if (className == "Object")
                         {
-                            name += "U";
+                            NameCpp += "U";
                             break;
                         }
 
@@ -138,12 +135,10 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
                 }
                 else
                 {
-		            name += "F";
+                    NameCpp += "F";
                 }
 
-                name += await GetName();
-                NameCpp = name;
-
+                NameCpp += await GetName();
                 return NameCpp;
             }
 
@@ -204,13 +199,13 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
             {
                 var ret = new T
                 {
-                    FullName = FullName,
-                    NameCpp = NameCpp,
-                    ObjName = ObjName,
+                    //FullName = FullName,
+                    //NameCpp = NameCpp,
+                    //ObjName = ObjName,
                     Object = Object,
-                    ObjClass = ObjClass,
-                    Outer = Outer,
-                    Package = Package
+                    //ObjClass = ObjClass,
+                    //Outer = Outer,
+                    //Package = Package
                 };
 
                 return ret;
@@ -228,7 +223,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
 
             public async Task<UEField> GetNext()
             {
-                if (!ObjField.Empty())
+                if (ObjField.Empty())
                     ObjField = await Object.Cast<UField>();
 
                 if (!ObjField.Next.IsValid())
@@ -566,7 +561,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
             }
             public new async Task<Info> GetInfo()
             {
-                string typeStr = await IsEnum() ? $"TEnumAsByte < {MakeUniqueCppName(await GetEnum())} > " : "unsigned char";
+                string typeStr = await IsEnum() ? $"TEnumAsByte < {await MakeUniqueCppName(await GetEnum())} > " : "unsigned char";
                 return new Info(PropertyType.Primitive, sizeof(byte), false, typeStr);
             }
         }
@@ -887,7 +882,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
             }
             public new async Task<Info> GetInfo()
             {
-                return new Info(PropertyType.PredefinedStruct, Marshal.SizeOf<FName>(), true, $"struct {MakeUniqueCppName(await GetStruct())}");
+                return new Info(PropertyType.PredefinedStruct, Marshal.SizeOf<FName>(), true, $"struct {await MakeUniqueCppName(await GetStruct())}");
             }
         }
 

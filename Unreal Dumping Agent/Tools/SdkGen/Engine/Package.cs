@@ -335,6 +335,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
             if (AddDependency(classPackage))
                 return;
 
+            // Exit if package already processed
             if (ProcessedObjects[obj.GetAddress()])
                 return;
 
@@ -351,12 +352,13 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
             if (super.IsValid() && super != obj)
                 await GeneratePrerequisites(super);
 
+            await GenerateMemberPrerequisites((await structObj.GetChildren()).Cast<GenericTypes.UEProperty>());
+
+
             if (await isClassT)
                 await GenerateClass(obj.Cast<GenericTypes.UEClass>());
             else
                 await GenerateScriptStruct(obj.Cast<GenericTypes.UEScriptStruct>());
-
-            await GenerateMemberPrerequisites((await structObj.GetChildren()).Cast<GenericTypes.UEProperty>());
         }
 
         /// <summary>

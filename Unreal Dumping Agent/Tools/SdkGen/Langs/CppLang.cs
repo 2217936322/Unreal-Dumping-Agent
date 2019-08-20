@@ -197,7 +197,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Langs
 
             // static
             if (m.IsStatic && inHeader && Generator.ShouldConvertStaticMethods)
-                text += "$static ";
+                text += $"static ";
 
             // Return Type
             var retn = m.Parameters.Where(item => item.ParamType == Package.Method.Parameter.Type.Return).ToList();
