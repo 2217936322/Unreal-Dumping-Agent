@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4;
+using Unreal_Dumping_Agent.UtilsHelper;
 
 namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
 {
@@ -57,9 +58,31 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
             return $"{name}{MakeValidName(await t.GetName())}";
         }
 
-        public static async Task<string> MakeUniqueCppName(GenericTypes.UEConst c) => await MakeUniqueCppNameImpl(c);
-        public static async Task<string> MakeUniqueCppName(GenericTypes.UEEnum e) => await MakeUniqueCppNameImpl(e);
-        public static async Task<string> MakeUniqueCppName(GenericTypes.UEStruct ss) => await MakeUniqueCppNameImpl(ss);
+        public static async Task<string> MakeUniqueCppName(GenericTypes.UEConst c)
+        {
+            return await MakeUniqueCppNameImpl(c);
+        }
+
+        public static async Task<string> MakeUniqueCppName(GenericTypes.UEEnum e)
+        {
+            string name = await MakeUniqueCppNameImpl(e);
+            if (!name.Empty() && name[0] != 'E')
+                name = $"E{name}";
+
+            return name;
+        }
+
+        public static async Task<string> MakeUniqueCppName(GenericTypes.UEStruct ss)
+        {
+            string name = string.Empty;
+            if (ss.IsValid())
+            {
+                if (ObjectsStore.CountObjects<GenericTypes.UEStruct>(await ss.GetName()) > 1)
+                    name = $"{MakeValidName((await ss.GetOuter()).GetNameCpp().Result)}_";
+            }
+
+            return $"{name}{MakeValidName(await ss.GetNameCpp())}";
+        }
 
     }
 }

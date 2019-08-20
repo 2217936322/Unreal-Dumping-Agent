@@ -247,6 +247,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
                 ObjAddress = address;
 
                 // Read Struct
+                // ToDo: Check if ReadJsonClass needed !!
                 Utils.MemObj.ReadJsonClass(this, ObjAddress, JsonType);
                 AnsiName = Utils.MemObj.ReadString(address + AnsiNameOffset);
 

@@ -197,7 +197,7 @@ namespace Unreal_Dumping_Agent.Tools
                 await package.Process();
 
                 if (!await package.Save())
-                    return;
+                    continue;
 
                 Package.PackageMap[packObj] = package;
                 packages.Add(package);
@@ -217,6 +217,11 @@ namespace Unreal_Dumping_Agent.Tools
             #endregion
 
             SdkAfterFinish(packages);
+
+            while (true)
+            {
+                
+            }
         }
 
         /// <summary>

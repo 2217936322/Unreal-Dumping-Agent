@@ -62,25 +62,22 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
             }
             public Task<string> GetName()
             {
-                return Task.Run(() =>
+                if (!ObjName.Empty())
+                    return Task.FromResult(ObjName);
+
+                string name = NamesStore.GetByIndex(Object.Name.Index); // TODO: Check Here !!
+                if (!name.Empty() && (Object.Name.Number > 0 && Object.Name.Index != Object.Name.Number))
+                    name += "_" + Object.Name.Number;
+
+                int pos = name.LastIndexOf('/');
+                if (pos == -1)
                 {
-                    if (!ObjName.Empty())
-                        return ObjName;
+                    ObjName = name;
+                    return Task.FromResult(ObjName);
+                }
 
-                    string name = NamesStore.GetByIndex(Object.Name.Index); // TODO: Check Here !!
-                    if (!name.Empty() && (Object.Name.Number > 0 && Object.Name.Index != Object.Name.Number))
-                        name += "_" + Object.Name.Number;
-
-                    int pos = name.LastIndexOf('/');
-                    if (pos == -1)
-                    {
-                        ObjName = name;
-                        return ObjName;
-                    }
-
-                    ObjName = name.Substring(pos + 1);
-                    return ObjName;
-                });
+                ObjName = name.Substring(pos + 1);
+                return Task.FromResult(ObjName);
             }
             public async Task<string> GetInstanceClassName()
             {
@@ -561,7 +558,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
             }
             public new async Task<Info> GetInfo()
             {
-                string typeStr = await IsEnum() ? $"TEnumAsByte < {await MakeUniqueCppName(await GetEnum())} > " : "unsigned char";
+                string typeStr = await IsEnum() ? $"TEnumAsByte<{await MakeUniqueCppName(await GetEnum())}>" : "unsigned char";
                 return new Info(PropertyType.Primitive, sizeof(byte), false, typeStr);
             }
         }
@@ -882,7 +879,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
             }
             public new async Task<Info> GetInfo()
             {
-                return new Info(PropertyType.PredefinedStruct, Marshal.SizeOf<FName>(), true, $"struct {await MakeUniqueCppName(await GetStruct())}");
+                return new Info(PropertyType.CustomStruct, await GetElementSize(), true, $"struct {await MakeUniqueCppName(await GetStruct())}");
             }
         }
 
