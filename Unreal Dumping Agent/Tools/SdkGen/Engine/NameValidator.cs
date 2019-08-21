@@ -62,7 +62,6 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
         {
             return await MakeUniqueCppNameImpl(c);
         }
-
         public static async Task<string> MakeUniqueCppName(GenericTypes.UEEnum e)
         {
             string name = await MakeUniqueCppNameImpl(e);
@@ -71,7 +70,6 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
 
             return name;
         }
-
         public static async Task<string> MakeUniqueCppName(GenericTypes.UEStruct ss)
         {
             string name = string.Empty;
@@ -83,6 +81,5 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
 
             return $"{name}{MakeValidName(await ss.GetNameCpp())}";
         }
-
     }
 }

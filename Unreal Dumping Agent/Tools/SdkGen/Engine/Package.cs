@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
@@ -14,6 +15,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
     // ToDo: Most Important Thing, like on GenerateMembers, in loop u can run all async methods in prop and then wait when u need
 
 #pragma warning disable 660,661
+    [DebuggerDisplay("Name = {GetName().Result}")]
     public class Package
 #pragma warning restore 660,661
     {
@@ -639,8 +641,9 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
                     }
                 }
 
-                // ToDo: Check Here
-                properties.Sort((x, y) => ComparePropertyLess(x, y).Result ? 0 : 1);
+                // ToDo: As C# sort not same as C++ version, that's not work
+                // Anyway after some testes it's not needed !!
+                // properties.Sort((x, y) => ComparePropertyLess(x, y).Result ? 0 : 1);
 
                 c.Members = await GenerateMembers(classObj, offset, properties);
             }

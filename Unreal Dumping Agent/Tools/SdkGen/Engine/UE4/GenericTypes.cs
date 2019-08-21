@@ -196,13 +196,13 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
             {
                 var ret = new T
                 {
-                    //FullName = FullName,
-                    //NameCpp = NameCpp,
-                    //ObjName = ObjName,
+                    FullName = FullName,
+                    NameCpp = NameCpp,
+                    ObjName = ObjName,
                     Object = Object,
-                    //ObjClass = ObjClass,
-                    //Outer = Outer,
-                    //Package = Package
+                    ObjClass = ObjClass,
+                    Outer = Outer,
+                    Package = Package
                 };
 
                 return ret;

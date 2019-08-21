@@ -51,7 +51,6 @@ namespace Unreal_Dumping_Agent.Memory
                 return w.Ptr;
             }
         }
-
         public class StringAllocer : IDisposable
         {
             public enum StringType

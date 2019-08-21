@@ -85,7 +85,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Langs
 
         public CppLang()
         {
-            IncludePath = Path.Combine(Generator.LangPaths, "Cpp", (Generator.SdkType == SdkType.External ? @"\External" : @"\Internal"));
+            IncludePath = Path.Combine(Generator.LangPaths, "Cpp", Generator.SdkType == SdkType.External ? "External" : "Internal");
         }
 
         #region FileStruct
@@ -368,7 +368,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Langs
             var text = new CorrmStringBuilder($"// {c.FullName}{Environment.NewLine}// ");
 
             if (c.InheritedSize > 0)
-                text += $"0x{c.Size - c.InheritedSize:X4} ({(long)c.Size:X4} - 0x{(long)c.InheritedSize:X4}){Environment.NewLine}";
+                text += $"0x{c.Size - c.InheritedSize:X4} (0x{(long)c.Size:X4} - 0x{(long)c.InheritedSize:X4}){Environment.NewLine}";
             else
                 text += $"0x{(long)c.Size:X4}{Environment.NewLine}";
 
