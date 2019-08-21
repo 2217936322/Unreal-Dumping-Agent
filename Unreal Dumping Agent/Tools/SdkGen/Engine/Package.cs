@@ -482,8 +482,9 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
                 }
             }
 
-            // ToDo: Check Here
-            properties.Sort((x, y) => ComparePropertyLess(x, y).Result ? 0 : 1);
+            // As C# sort not same as C++ version, that's not work
+            // Anyway after some testes it's not needed !!
+            // properties.Sort((x, y) => ComparePropertyLess(x, y).Result ? 0 : 1);
 
             var memberT = GenerateMembers(scriptStructObj, offset, properties);
 
@@ -641,7 +642,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
                     }
                 }
 
-                // ToDo: As C# sort not same as C++ version, that's not work
+                // As C# sort not same as C++ version, that's not work
                 // Anyway after some testes it's not needed !!
                 // properties.Sort((x, y) => ComparePropertyLess(x, y).Result ? 0 : 1);
 
