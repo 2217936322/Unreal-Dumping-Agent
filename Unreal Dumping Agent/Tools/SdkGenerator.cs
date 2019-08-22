@@ -209,6 +209,8 @@ namespace Unreal_Dumping_Agent.Tools
                 }
             });
 
+            Utils.ConsoleText("Finaly", "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGG", ConsoleColor.Cyan);
+
             if (!packages.Empty())
             {
                 for (int i = 0; i < packages.Count - 1; i++)
