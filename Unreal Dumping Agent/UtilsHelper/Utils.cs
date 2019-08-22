@@ -114,11 +114,14 @@ namespace Unreal_Dumping_Agent.UtilsHelper
         }
         public static void ConsoleText(string category, string message, ConsoleColor textColor)
         {
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.Write($"[{category,-10}] ");
-            Console.ForegroundColor = textColor;
-            Console.WriteLine(message);
-            Console.ResetColor();
+            lock (MainLocker)
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.Write($"[{category,-10}] ");
+                Console.ForegroundColor = textColor;
+                Console.WriteLine(message);
+                Console.ResetColor();
+            }
         }
         public static int GamePointerSize()
         {

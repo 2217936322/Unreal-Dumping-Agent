@@ -235,7 +235,7 @@ namespace Unreal_Dumping_Agent.Memory
             if (!ReadBytes(lpBaseAddress, jsonStruct.GetSize(), out var buffer))
                 return false;
 
-            // Must Have UnrealMemoryVar Attribute AND Field With Same Name With JsonVar Name
+            // Must Have JsonMemoryVar Attribute AND Field With Same Name With JsonVar Name
             foreach (var field in refClass.GetType().GetFields().Where(JsonMemoryVar.HasAttribute))
             {
                 // Get JsonVar

@@ -61,7 +61,7 @@ namespace Unreal_Dumping_Agent
             Utils.MemObj.SuspendProcess();
             JsonReflector.LoadJsonEngine("EngineBase");
 
-            await new SdkGenerator((IntPtr)0x7FF7DD472B00, (IntPtr)0x7FF7DD58F1A8).Start(new AgentRequestInfo());
+            await new SdkGenerator((IntPtr)0x7FF6D4F82B00, (IntPtr)0x7FF6D509F1A8).Start(new AgentRequestInfo());
 
             //var fPointer = new EngineClasses.UField();
             //await fPointer.ReadData((IntPtr)0x228E0C92B30);
@@ -72,11 +72,12 @@ namespace Unreal_Dumping_Agent
             //var pat = PatternScanner.Parse("None", 0, "4E 6F 6E 65 00", 0xFF);
             //var gg = await PatternScanner.FindPattern(Utils.MemObj, new List<PatternScanner.Pattern>() { pat });
 
-            Console.WriteLine();
+            Console.WriteLine("FINIIIISHED");
         }
 
         private async Task MainAsync()
         {
+            Console.WriteLine($"[Info] Started.{Environment.CurrentDirectory}");
             await Test();
             return;
 
@@ -155,7 +156,10 @@ namespace Unreal_Dumping_Agent
             /* COMMANDS START HERE */
             await context.User.SendMessageAsync($"ok, that's what i think you need to do:\n`{uTask.TypeEnum():G}` => `{uTask.TaskEnum():G}`\n--------------------------");
 
+            // Don't Wait
+#pragma warning disable 4014
             ExecuteTasks(curUser, uTask, message, context);
+#pragma warning restore 4014
         }
         private async Task DiscordManager_ReactionAdded(SocketReaction reaction)
         {

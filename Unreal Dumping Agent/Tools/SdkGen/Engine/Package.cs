@@ -19,6 +19,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
     public class Package
 #pragma warning restore 660,661
     {
+        private readonly object _lockProcessedObjects = new object();
         public static Dictionary<GenericTypes.UEObject, Package> PackageMap { get; } = new Dictionary<GenericTypes.UEObject, Package>();
         public static Dictionary<IntPtr, bool> ProcessedObjects { get; private set; }
 
@@ -276,11 +277,15 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
                 Classes.Any(c => !c.Methods.Empty() || !c.PredefinedMethods.Empty() || !c.Methods.Empty()) ||
                 Constants.Any(c => !c.Name.Empty()))
             {
-                SaveStructs();
-                SaveClasses();
-                SaveFunctions();
-                SaveConstants();
+                var tasks = new []
+                {
+                    SaveStructs(),
+                    SaveClasses(),
+                    SaveFunctions(),
+                    SaveConstants()
+                };
 
+                Task.WaitAll(tasks);
                 return true;
             }
 
@@ -325,10 +330,12 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
                 return;
             }
 
-            if (!ProcessedObjects.ContainsKey(obj.GetAddress()))
-                ProcessedObjects[obj.GetAddress()] = false;
-
-            ProcessedObjects[obj.GetAddress()] = ProcessedObjects[obj.GetAddress()] | false;
+            lock (_lockProcessedObjects)
+            {
+                if (!ProcessedObjects.ContainsKey(obj.GetAddress()))
+                    ProcessedObjects[obj.GetAddress()] = false;
+                ProcessedObjects[obj.GetAddress()] = ProcessedObjects[obj.GetAddress()] | false;
+            }
 
             var classPackage = await obj.GetPackageObject();
             if (!classPackage.IsValid())
@@ -340,8 +347,8 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
             // Exit if package already processed
             if (ProcessedObjects[obj.GetAddress()])
                 return;
-
-            ProcessedObjects[obj.GetAddress()] = true;
+            lock (_lockProcessedObjects)
+                ProcessedObjects[obj.GetAddress()] = true;
 
             // Outer
             var outer = await obj.GetOuter();
@@ -975,10 +982,10 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
         #endregion
 
         #region SavePackage
-        private void SaveStructs() => Generator.GenLang.SaveStructs(this);
-        private void SaveClasses() => Generator.GenLang.SaveClasses(this);
-        private void SaveFunctions() => Generator.GenLang.SaveFunctions(this);
-        private void SaveConstants() => Generator.GenLang.SaveConstants(this);
+        private async Task SaveStructs() => await Generator.GenLang.SaveStructs(this);
+        private async Task SaveClasses() => await Generator.GenLang.SaveClasses(this);
+        private async Task SaveFunctions() => await Generator.GenLang.SaveFunctions(this);
+        private async Task SaveConstants() => await Generator.GenLang.SaveConstants(this);
         #endregion
     }
 }

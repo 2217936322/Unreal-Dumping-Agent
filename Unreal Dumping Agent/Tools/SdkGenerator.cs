@@ -191,17 +191,23 @@ namespace Unreal_Dumping_Agent.Tools
             #endregion
 
             #region Packages
-            foreach (var packObj in packageObjects)
+            var lockObj = new object();
+            Parallel.ForEach(packageObjects, packObj =>
             {
                 var package = new Package(packObj);
-                await package.Process();
+                package.Process().GetAwaiter().GetResult();
 
-                if (!await package.Save())
-                    continue;
+                if (!package.Save().Result)
+                    return;
 
-                Package.PackageMap[packObj] = package;
-                packages.Add(package);
-            }
+                Utils.ConsoleText("Dump", package.GetName().Result, ConsoleColor.Red);
+
+                lock (lockObj)
+                {
+                    Package.PackageMap[packObj] = package;
+                    packages.Add(package);
+                }
+            });
 
             if (!packages.Empty())
             {
