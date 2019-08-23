@@ -53,6 +53,33 @@ namespace Unreal_Dumping_Agent
         #endregion
 
         private static void Main() => new Program().MainAsync().GetAwaiter().GetResult();
+        private async Task MainAsync()
+        {
+            Console.WriteLine($"[Info] Started.{Environment.CurrentDirectory}");
+            //await Test();
+            //return;
+
+            // Init
+            Utils.BotWorkType = Utils.BotType.Local;
+            var initChat = _chatManager.Init();
+            var initDiscord = _discordManager.Init();
+
+            // Wait ChatManager init
+            await initChat;
+            await initDiscord;
+
+            // Start
+            _discordManager.Start();
+            _discordManager.MessageHandler += DiscordManager_MessageHandler;
+            _discordManager.ReactionAddedHandler += DiscordManager_ReactionAdded;
+
+            // _httpManager.Start(2911);
+
+            // Wait until window closed
+            while (Console.ReadLine() != "exit")
+                Thread.Sleep(1);
+        }
+
         private static async Task Test()
         {
             Utils.MemObj = new Memory.Memory(Utils.DetectUnrealGame());
@@ -75,33 +102,7 @@ namespace Unreal_Dumping_Agent
             Console.WriteLine("FINIIIISHED");
         }
 
-        private async Task MainAsync()
-        {
-            Console.WriteLine($"[Info] Started.{Environment.CurrentDirectory}");
-            await Test();
-            return;
-
-            // Init
-            Utils.BotWorkType = Utils.BotType.Local;
-            var initChat = _chatManager.Init();
-            var initDiscord = _discordManager.Init();
-
-            // Wait ChatManager init
-            await initChat;
-            await initDiscord;
-
-            // Start
-            _discordManager.Start();
-            _discordManager.MessageHandler += DiscordManager_MessageHandler;
-            _discordManager.ReactionAddedHandler += DiscordManager_ReactionAdded;
-
-            _httpManager.Start(2911);
-
-            // Wait until window closed
-            while (Console.ReadLine() != "exit")
-                Thread.Sleep(1);
-        }
-
+        #region Discord Handlers
         private async Task DiscordManager_MessageHandler(SocketUserMessage message, SocketCommandContext context)
         {
             // Update users
@@ -114,7 +115,7 @@ namespace Unreal_Dumping_Agent
 
             // message not form DM
             int argPos = 0;
-            if (!context.IsPrivate && 
+            if (!context.IsPrivate &&
                 message.HasStringPrefix("!agent ", ref argPos) ||
                 message.HasMentionPrefix(_discordManager.CurrentBot, ref argPos))
             {
@@ -143,7 +144,8 @@ namespace Unreal_Dumping_Agent
                                            $"That's mean i will get your `IP` (it's safe i will not `Attack` u {DiscordText.GetRandomHappyEmoji()}).\n" +
                                            $"So open the blow `link` and let me play {DiscordText.GetRandomHappyEmoji()}.");
                     bEmbed.AddField($"Linking Link", $"http://localhost:2911");
-                    bEmbed.WithFooter("Say Thanks to CorrM :heart:");
+                    bEmbed.WithUrl(Utils.DonateUrl);
+                    bEmbed.WithFooter(Utils.DiscordFooterText, Utils.DiscordFooterImg);
 
                     await context.User.SendMessageAsync(embed: bEmbed.Build());
                     return;
@@ -204,6 +206,8 @@ namespace Unreal_Dumping_Agent
 
             await addReact;
         }
+        #endregion
+
         private static async Task ExecuteTasks(UsersInfo curUser, QuestionPrediction uTask, SocketUserMessage messageParam, SocketCommandContext context)
         {
             var requestInfo = new AgentRequestInfo
@@ -261,13 +265,14 @@ namespace Unreal_Dumping_Agent
                     Title = "Target Info",
                     Description = "**Information** about your __target__.",
                 };
-                emb.WithFooter("Donate to keep me working :)");
+                emb.WithUrl(Utils.DonateUrl);
+                emb.WithFooter(Utils.DiscordFooterText, Utils.DiscordFooterImg);
 
                 emb.AddField("Window Name", Utils.MemObj.TargetProcess.MainWindowTitle);
                 emb.AddField("Exe Name", Path.GetFileName(Utils.MemObj.TargetProcess.MainModule?.FileName));
                 emb.AddField("Unreal Version", ueVersion);
                 emb.AddField("Game Architecture", Utils.MemObj.Is64Bit ? "64Bit" : "32bit");
-
+                
                 await context.User.SendMessageAsync(embed: emb.Build());
             }
             #endregion
@@ -316,7 +321,8 @@ namespace Unreal_Dumping_Agent
                     Title = $"Finder Result ({uTask.TaskEnum():G})",
                     Description = "That's what i found for you :-\n\n",
                 };
-                emb.WithFooter("Donate to keep me working :)");
+                emb.WithUrl(Utils.DonateUrl);
+                emb.WithFooter(Utils.DiscordFooterText, Utils.DiscordFooterImg);
 
                 for (int i = 0; i < finderResult.Count; i++)
                     emb.Description += $"{DiscordText.GetEmojiNumber(i + 1, true)}) `0x{finderResult[i].ToInt64():X}`.\n";
@@ -334,7 +340,7 @@ namespace Unreal_Dumping_Agent
             #region Sdk Generator
             else if (uTask.TypeEnum() == EQuestionType.SdkDump)
             {
-                await new SdkGenerator(curUser.GobjectsPtr, curUser.GnamesPtr).Start(new AgentRequestInfo());
+                await new SdkGenerator(curUser.GobjectsPtr, curUser.GnamesPtr).Start(requestInfo);
             }
             #endregion
         }

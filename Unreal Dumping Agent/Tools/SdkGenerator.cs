@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Discord;
 using Unreal_Dumping_Agent.Tools.SdkGen;
 using Unreal_Dumping_Agent.Tools.SdkGen.Engine;
 using Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4;
@@ -32,12 +33,90 @@ namespace Unreal_Dumping_Agent.Tools
         #endregion
 
         private readonly IntPtr _gobjects, _gnames;
-        private RestUserMessage _sdkMessage;
+        private AgentRequestInfo _requestInfo;
 
         public SdkGenerator(IntPtr gobjects, IntPtr gnames)
         {
             _gobjects = gobjects;
             _gnames = gnames;
+        }
+
+        private async Task UpdateDiscordState(string title, string content, bool inline = false)
+        {
+            if (_requestInfo.Context == null)
+                return;
+
+            Embed curEmbed;
+
+            // Get old embed
+            if (_requestInfo.AgentMessage != null)
+            {
+                // Update the current embed
+                curEmbed = _requestInfo.AgentMessage.Embeds.First();
+
+                // Get old information
+                var newEmbed = new EmbedBuilder
+                {
+                    Title = curEmbed.Title,
+                    Color = curEmbed.Color,
+                    Description = curEmbed.Description,
+                    ImageUrl = curEmbed.Image?.Url,
+                    Url = curEmbed.Url,
+                    ThumbnailUrl = curEmbed.Thumbnail?.Url,
+                    Timestamp = curEmbed.Timestamp?.DateTime,
+                    Footer = new EmbedFooterBuilder { Text = curEmbed.Footer?.Text, IconUrl = curEmbed.Footer?.IconUrl }
+                };
+
+                // Gen Fields, with same sort of fields
+                bool isOldField = false;
+                var newFields = new List<EmbedFieldBuilder>();
+                foreach (var oldField in curEmbed.Fields)
+                {
+                    if (oldField.Name != title)
+                    {
+                        newFields.Add(new EmbedFieldBuilder { Name = oldField.Name, Value = oldField.Value, IsInline = inline });
+                    }
+                    else
+                    {
+                        // Add modified field
+                        newFields.Add(new EmbedFieldBuilder {Name = title, Value = content, IsInline = inline});
+                        isOldField = true;
+                    }
+                }
+                if (!isOldField)
+                    newFields.Add(new EmbedFieldBuilder {Name = title, Value = content, IsInline = inline});
+
+                // Gen new embed
+                newEmbed.WithFields(newFields);
+                curEmbed = newEmbed.Build();
+            }
+            else
+            {
+                // First Message
+                var embBuilder = new EmbedBuilder
+                {
+                    Title = "Sdk Generator Info",
+                    Description = "Information about `Sdk Generation` progress",
+                    Color = Color.Blue
+                };
+
+                // Fields
+                var fBuild = new EmbedFieldBuilder { Name = title, Value = content, IsInline = inline };
+
+                embBuilder.WithUrl(Utils.DonateUrl);
+                embBuilder.WithFields(fBuild);
+                embBuilder.WithFooter(Utils.DiscordFooterText, Utils.DiscordFooterImg);
+
+                curEmbed = embBuilder.Build();
+            }
+
+            // if first message then create a new message
+            if (_requestInfo.AgentMessage == null)
+                _requestInfo.AgentMessage = await _requestInfo.Context.Channel.SendMessageAsync(embed: curEmbed);
+
+            // if it's old one then, just edit it !!
+            else
+                await _requestInfo.AgentMessage.ModifyAsync(msg => msg.Embed = curEmbed);
         }
 
         /// <summary>
@@ -48,27 +127,44 @@ namespace Unreal_Dumping_Agent.Tools
         public async Task<GenRetInfo> Start(AgentRequestInfo requestInfo)
         {
             var ret = new GenRetInfo();
+            _requestInfo = requestInfo;
 
-            // ToDo: Add some user message here like count, and some things like that
-            //if (requestInfo.Context != null)
-            //    _sdkMessage = await requestInfo.Context.Channel.SendMessageAsync();
+            #region Check Address
+            var uDiscord = UpdateDiscordState("State", "Check Address !!");
 
-            // Check Address
             if (!Utils.IsValidGNamesAddress(_gnames))
-                return new GenRetInfo { State = GeneratorState.BadGName};
+                return new GenRetInfo { State = GeneratorState.BadGName };
             if (!Utils.IsTUobjectArray(_gobjects))
                 return new GenRetInfo { State = GeneratorState.BadGObject };
+            #endregion
+
+            #region GNames
+            // Wait Discord message to send (if was not !!)
+            await uDiscord; uDiscord = UpdateDiscordState("State", "Dumping **GNames**. !!");
 
             // Dump GNames
             var gnamesT = NamesStore.Initialize(_gnames);
             if (!await gnamesT)
                 return new GenRetInfo { State = GeneratorState.BadGName };
 
+            // Update Information
+            await uDiscord; uDiscord = UpdateDiscordState("GNames", $"*{NamesStore.GNames.Names.Count}*");
+            #endregion
+
+            #region GObjects
+            // Wait Discord message to send (if was not !!)
+            await uDiscord; uDiscord = UpdateDiscordState("State", "Dumping **GObjects**. !!");
+
             // Dump GObjects
             var gobjectsT = ObjectsStore.Initialize(_gobjects);
             if (!await gobjectsT)
                 return new GenRetInfo { State = GeneratorState.BadGObject };
 
+            // Update Information
+            await uDiscord; uDiscord = UpdateDiscordState("GObjects", $"*{ObjectsStore.GObjects.Objects.Count}*");
+            #endregion
+
+            #region Init Generator
             // Init Generator Settings
             if (!Generator.Initialize())
                 return new GenRetInfo { State = GeneratorState.Bad };
@@ -91,7 +187,9 @@ namespace Unreal_Dumping_Agent.Tools
 
             if (!InitSdkLang())
                 return new GenRetInfo { State = GeneratorState.BadSdkLang };
+            #endregion
 
+            #region Dump Names/Objects
             // ToDo: Dump To Files
             // Dump To Files
             //if (Utils::GenObj->ShouldDumpArrays())
@@ -101,7 +199,12 @@ namespace Unreal_Dumping_Agent.Tools
             //    *startInfo.State = "Dump (GNames/GObjects) Done.";
             //    Sleep(2 * 1000);
             //}
+            #endregion
 
+            // Wait Discord message to send (if was not !!)
+            await uDiscord;
+
+            // Process Packages
             await ProcessPackages();
 
             return ret;
@@ -147,10 +250,15 @@ namespace Unreal_Dumping_Agent.Tools
         /// <summary>
         /// Process All Packages
         /// </summary>
-        private static async Task ProcessPackages()
+        private async Task ProcessPackages()
         {
+            var uDiscord = UpdateDiscordState("State", "Collect **Packages**. !!");
+
             var packages = new List<Package>();
             var packageObjects = CollectPackages();
+
+            // Update Information
+            await uDiscord; uDiscord = UpdateDiscordState("Packages", $"*{packageObjects.Count}*", true);
 
             #region CoreUObject
             {
@@ -176,6 +284,8 @@ namespace Unreal_Dumping_Agent.Tools
                     break;
                 }
 
+                await uDiscord; uDiscord = UpdateDiscordState("State", "Dumping **CoreUObject**.");
+
                 // Process CoreUObject
                 var package = new Package(coreUObject);
                 await package.Process();
@@ -192,6 +302,10 @@ namespace Unreal_Dumping_Agent.Tools
             #endregion
 
             #region Packages
+            // Update Information
+            await uDiscord; uDiscord = UpdateDiscordState("State", $"Dumping **Packages** ( {packages.Count}/{packageObjects.Count} ).");
+
+            // Process Packages
             var lockObj = new object();
             Parallel.ForEach(packageObjects, packObj =>
             {
@@ -203,16 +317,15 @@ namespace Unreal_Dumping_Agent.Tools
                 if (!package.Save().Result)
                     return;
 
-                Utils.ConsoleText("Dump", package.GetName().Result, ConsoleColor.Red);
-
                 lock (lockObj)
                 {
                     Package.PackageMap[packObj] = package;
                     packages.Add(package);
                 }
-            });
 
-            Utils.ConsoleText("Finaly", "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGG", ConsoleColor.Cyan);
+                UpdateDiscordState("State", $"Dumping **Packages** ( {packages.Count}/{packageObjects.Count} ).").GetAwaiter().GetResult();
+                Utils.ConsoleText("Dump", package.GetName().Result, ConsoleColor.Red);
+            });
 
             if (!packages.Empty())
             {
@@ -228,11 +341,6 @@ namespace Unreal_Dumping_Agent.Tools
             #endregion
 
             await SdkAfterFinish(packages);
-
-            while (true)
-            {
-                Thread.Sleep(1);
-            }
         }
 
         /// <summary>

@@ -21,6 +21,9 @@ namespace Unreal_Dumping_Agent.UtilsHelper
         public const string Version = "1.0.0";
         public const string Title = "Welcome Agent";
         public const string UnrealWindowClass = "UnrealWindow";
+        public const string DonateUrl = "https://www.patreon.com/CorrM";
+        public const string DiscordFooterText = "Donate to keep me working :), (Click on message title)";
+        public const string DiscordFooterImg = "https://c5.patreon.com/external/favicon/favicon-16x16.png?v=69kMELnXkB";
 
         #region Extinction
         public static T[] SubArray<T>(this T[] data, int index, int length)
