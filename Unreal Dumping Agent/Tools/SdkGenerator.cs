@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Unreal_Dumping_Agent.Tools.SdkGen;
 using Unreal_Dumping_Agent.Tools.SdkGen.Engine;
@@ -195,6 +196,8 @@ namespace Unreal_Dumping_Agent.Tools
             Parallel.ForEach(packageObjects, packObj =>
             {
                 var package = new Package(packObj);
+
+                // Async in Parallel => Loot of problems !!
                 package.Process().GetAwaiter().GetResult();
 
                 if (!package.Save().Result)
@@ -224,18 +227,18 @@ namespace Unreal_Dumping_Agent.Tools
             }
             #endregion
 
-            SdkAfterFinish(packages);
+            await SdkAfterFinish(packages);
 
             while (true)
             {
-                
+                Thread.Sleep(1);
             }
         }
 
         /// <summary>
         /// Called After All Of Packages Proceed 
         /// </summary>
-        private static void SdkAfterFinish(List<Package> packages)
+        private static async Task SdkAfterFinish(List<Package> packages)
         {
             var missing = Package.ProcessedObjects.Where(kv => !kv.Value).ToList();
             var missedList = new List<GenericTypes.UEStruct>();
@@ -243,7 +246,7 @@ namespace Unreal_Dumping_Agent.Tools
             if (!missing.Empty())
                 missedList = missing.Select(kv => ObjectsStore.GetByAddress(kv.Key).Result.Cast<GenericTypes.UEStruct>()).ToList();
 
-            Generator.GenLang.SdkAfterFinish(packages, missedList);
+            await Generator.GenLang.SdkAfterFinish(packages, missedList);
         }
     }
 }
