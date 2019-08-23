@@ -334,7 +334,8 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
             {
                 if (!ProcessedObjects.ContainsKey(obj.GetAddress()))
                     ProcessedObjects[obj.GetAddress()] = false;
-                ProcessedObjects[obj.GetAddress()] = ProcessedObjects[obj.GetAddress()] | false;
+                else
+                    ProcessedObjects[obj.GetAddress()] = ProcessedObjects[obj.GetAddress()] | false;
             }
 
             var classPackage = await obj.GetPackageObject();
@@ -347,6 +348,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
             // Exit if package already processed
             if (ProcessedObjects[obj.GetAddress()])
                 return;
+
             lock (_lockProcessedObjects)
                 ProcessedObjects[obj.GetAddress()] = true;
 
