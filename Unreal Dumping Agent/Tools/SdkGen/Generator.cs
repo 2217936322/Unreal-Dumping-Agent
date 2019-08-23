@@ -48,16 +48,25 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen
                 if (jStructVar.FromSuper)
                     continue;
 
+                string jVarType = jStructVar.VarType
+                    .Replace("int32", "int32_t")
+                    .Replace("int16", "int16_t")
+                    .Replace("int8", "int8_t")
+
+                    .Replace("uint32", "uint32_t")
+                    .Replace("uint16", "uint16_t")
+                    .Replace("uint8", "uint8_t");
+
                 PredefinedMember cur;
-                if (Utils.IsNumber(jStructVar.VarType))
+                if (Utils.IsNumber(jVarType))
                 {
-                    cur.Name = $"{jStructVar.Name}[{jStructVar.VarType}]";
+                    cur.Name = $"{jStructVar.Name}[{jVarType}]";
                     cur.Type = "unsigned char ";
                 }
                 else
                 {
                     cur.Name = jStructVar.Name;
-                    cur.Type = jStructVar.IsPointer && !jStructVar.VarType.Contains("void*") ? $"class {jStructVar.VarType}" : jStructVar.VarType;
+                    cur.Type = jStructVar.IsPointer && !jVarType.Contains("void*") ? $"class {jVarType}" : jVarType;
                 }
 
                 varList.Add(cur);

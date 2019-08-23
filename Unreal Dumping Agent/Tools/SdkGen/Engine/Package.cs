@@ -745,7 +745,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
         {
             var ss = new Member
             {
-                Name = $"UnknownData{id}[0x{size:X}]",
+                Name = $"UnknownData{id:X2}[0x{size:X}]",
                 Type = "unsigned char",
                 Flags = 0,
                 Offset = offset,
