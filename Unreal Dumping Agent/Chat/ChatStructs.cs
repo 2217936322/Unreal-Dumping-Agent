@@ -11,6 +11,9 @@ namespace Unreal_Dumping_Agent.Chat
         LifeAsk = 3,
         Ask = 4,
         Funny = 5,
+        Open = 6,
+        Help = 7,
+
         Find = 101,
         LockProcess = 102,
         SdkDump = 103
@@ -20,7 +23,9 @@ namespace Unreal_Dumping_Agent.Chat
         None = 0,
         GNames = 1,
         GObject = 2,
-        Process = 3
+        Process = 3,
+        Sdk = 4,
+        Tool = 5
     }
 
     internal class ChatQuestion

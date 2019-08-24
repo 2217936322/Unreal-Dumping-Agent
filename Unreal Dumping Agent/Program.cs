@@ -351,6 +351,20 @@ namespace Unreal_Dumping_Agent
                 await new SdkGenerator(curUser.GobjectsPtr, curUser.GnamesPtr).Start(requestInfo);
             }
             #endregion
+
+            #region Open
+            else if (uTask.TypeEnum() == EQuestionType.Open)
+            {
+
+            }
+            #endregion
+
+            #region Help
+            else if (uTask.TypeEnum() == EQuestionType.Help)
+            {
+
+            }
+            #endregion
         }
     }
 }

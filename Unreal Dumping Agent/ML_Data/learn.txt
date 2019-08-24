@@ -30,6 +30,17 @@ what about you||CorrM||4
 noob||CorrM||5
 funny||CorrM||5
 
+// QuestionType == Open
+open||CorrM||6
+start||CorrM||6
+
+// QuestionType == Help
+hekp||CorrM||7
+how to use||CorrM||7
+how this work||CorrM||7
+how that work||CorrM||7
+what to do||CorrM||7
+
 // QuestionType == Find
 i need to find||CorrM||101
 find||CorrM||101
