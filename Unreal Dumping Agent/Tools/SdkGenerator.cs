@@ -1,9 +1,7 @@
-﻿using Discord.Rest;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Discord;
 using Unreal_Dumping_Agent.Tools.SdkGen;
@@ -32,8 +30,13 @@ namespace Unreal_Dumping_Agent.Tools
         };
         #endregion
 
+        private int _donePackagesCount = 0;
         private readonly IntPtr _gobjects, _gnames;
         private AgentRequestInfo _requestInfo;
+        private bool _sdkWork;
+        private List<Package> _packages = new List<Package>();
+        private List<GenericTypes.UEObject> _packageObjects = new List<GenericTypes.UEObject>();
+
 
         public SdkGenerator(IntPtr gobjects, IntPtr gnames)
         {
@@ -41,6 +44,12 @@ namespace Unreal_Dumping_Agent.Tools
             _gnames = gnames;
         }
 
+        /// <summary>
+        /// Update Sdk Gen Discord Message
+        /// </summary>
+        /// <param name="title">Field Name</param>
+        /// <param name="content">Field Content</param>
+        /// <param name="inline">Field Inline?</param>
         private async Task UpdateDiscordState(string title, string content, bool inline = false)
         {
             if (_requestInfo.Context == null)
@@ -120,6 +129,18 @@ namespace Unreal_Dumping_Agent.Tools
         }
 
         /// <summary>
+        /// Method To Update Sdk Gen Discord Message, Every Some Seconds
+        /// </summary>
+        private async Task DiscordMessageUpdater()
+        {
+            while (_sdkWork)
+            {
+                await UpdateDiscordState("State", $"Dumping **Packages** ( {_donePackagesCount}/{_packageObjects.Count + 1} ).");
+                await Task.Delay(2000);
+            }
+        }
+
+        /// <summary>
         /// Start Dumping Packages On Target Process<para/>
         /// As Programming Lang Code.
         /// </summary>
@@ -137,6 +158,9 @@ namespace Unreal_Dumping_Agent.Tools
             if (!Utils.IsTUobjectArray(_gobjects))
                 return new GenRetInfo { State = GeneratorState.BadGObject };
             #endregion
+
+            // Flag for `DiscordMessageUpdater`
+            _sdkWork = true;
 
             #region GNames
             // Wait Discord message to send (if was not !!)
@@ -253,12 +277,10 @@ namespace Unreal_Dumping_Agent.Tools
         private async Task ProcessPackages()
         {
             var uDiscord = UpdateDiscordState("State", "Collect **Packages**. !!");
-
-            var packages = new List<Package>();
-            var packageObjects = CollectPackages();
+            _packageObjects = CollectPackages();
 
             // Update Information
-            await uDiscord; uDiscord = UpdateDiscordState("Packages", $"*{packageObjects.Count}*", true);
+            await uDiscord; uDiscord = UpdateDiscordState("Packages", $"*{_packageObjects.Count}*", true);
 
             #region CoreUObject
             {
@@ -272,9 +294,9 @@ namespace Unreal_Dumping_Agent.Tools
                 // Get CoreUObject
                 var coreUObject = new GenericTypes.UEObject();
                 int coreUObjectIndex = 0;
-                for (int i = 0; i < packageObjects.Count; ++i)
+                for (int i = 0; i < _packageObjects.Count; ++i)
                 {
-                    var packPtr = packageObjects[i];
+                    var packPtr = _packageObjects[i];
 
                     if (await packPtr.GetName() != "CoreUObject")
                         continue;
@@ -290,29 +312,38 @@ namespace Unreal_Dumping_Agent.Tools
                 var package = new Package(coreUObject);
                 await package.Process();
 
+                _donePackagesCount++;
+
                 if (await package.Save())
                 {
                     Package.PackageMap[coreUObject] = package;
-                    packages.Add(package);
+                    _packages.Add(package);
                 }
 
                 // Remove CoreUObject Package to not dump it twice
-                packageObjects.RemoveAt(coreUObjectIndex);
+                _packageObjects.RemoveAt(coreUObjectIndex);
             }
             #endregion
 
+            // Don't wait
+            #pragma warning disable 4014
+            DiscordMessageUpdater();
+            #pragma warning restore 4014
+
             #region Packages
             // Update Information
-            await uDiscord; uDiscord = UpdateDiscordState("State", $"Dumping **Packages** ( {packages.Count}/{packageObjects.Count} ).");
+            await uDiscord; uDiscord = UpdateDiscordState("State", $"Dumping **Packages** ( {_packages.Count}/{_packageObjects.Count + 1} ).");
 
             // Process Packages
             var lockObj = new object();
-            Parallel.ForEach(packageObjects, packObj =>
+            Parallel.ForEach(_packageObjects, packObj =>
             {
                 var package = new Package(packObj);
 
                 // Async in Parallel => Loot of problems !!
                 package.Process().GetAwaiter().GetResult();
+
+                _donePackagesCount++;
 
                 if (!package.Save().Result)
                     return;
@@ -320,27 +351,29 @@ namespace Unreal_Dumping_Agent.Tools
                 lock (lockObj)
                 {
                     Package.PackageMap[packObj] = package;
-                    packages.Add(package);
+                    _packages.Add(package);
                 }
 
-                UpdateDiscordState("State", $"Dumping **Packages** ( {packages.Count}/{packageObjects.Count} ).").GetAwaiter().GetResult();
                 Utils.ConsoleText("Dump", package.GetName().Result, ConsoleColor.Red);
             });
 
-            if (!packages.Empty())
+            if (!_packages.Empty())
             {
-                for (int i = 0; i < packages.Count - 1; i++)
+                for (int i = 0; i < _packages.Count - 1; i++)
                 {
-                    for (int j = 0; j < packages.Count - i - 1; j++)
+                    for (int j = 0; j < _packages.Count - i - 1; j++)
                     {
-                        if (!Package.PackageDependencyComparer(packages[j], packages[j + 1]))
-                            packages = packages.Swap(j, j + 1);
+                        if (!Package.PackageDependencyComparer(_packages[j], _packages[j + 1]))
+                            _packages = _packages.Swap(j, j + 1);
                     }
                 }
             }
             #endregion
 
-            await SdkAfterFinish(packages);
+            await SdkAfterFinish(_packages);
+
+            _sdkWork = false;
+            await uDiscord; uDiscord = UpdateDiscordState("State", $"FINIIIISHED !!");
         }
 
         /// <summary>

@@ -285,10 +285,11 @@ namespace Unreal_Dumping_Agent
                     if (uTask.TaskEnum() == EQuestionTask.None)
                         await context.User.SendMessageAsync(DiscordText.GetRandomNotUnderstandString());
                     else
-                        await context.User.SendMessageAsync($"Give me your target !!");
+                        await context.User.SendMessageAsync($"Give me your target FIRST !!");
                     curUser.LastOrder = UserOrder.GetProcess;
                     return;
                 }
+
                 if (uTask.TaskEnum() == EQuestionTask.None)
                 {
                     await context.User.SendMessageAsync(DiscordText.GetRandomNotUnderstandString());
@@ -340,6 +341,13 @@ namespace Unreal_Dumping_Agent
             #region Sdk Generator
             else if (uTask.TypeEnum() == EQuestionType.SdkDump)
             {
+                if (Utils.MemObj == null)
+                {
+                    await context.User.SendMessageAsync($"Give me your target FIRST !!");
+                    curUser.LastOrder = UserOrder.GetProcess;
+                    return;
+                }
+
                 await new SdkGenerator(curUser.GobjectsPtr, curUser.GnamesPtr).Start(requestInfo);
             }
             #endregion
