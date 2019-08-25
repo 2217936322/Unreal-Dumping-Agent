@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -14,7 +13,6 @@ using Discord.WebSocket;
 using Unreal_Dumping_Agent.Chat;
 using Unreal_Dumping_Agent.Discord;
 using Unreal_Dumping_Agent.Discord.Misc;
-using Unreal_Dumping_Agent.Http;
 using Unreal_Dumping_Agent.Json;
 using Unreal_Dumping_Agent.Memory;
 using Unreal_Dumping_Agent.Tools;
@@ -37,7 +35,6 @@ namespace Unreal_Dumping_Agent
     public class Program
     {
         private readonly ChatManager _chatManager = new ChatManager();
-        private readonly HttpManager _httpManager = new HttpManager();
         private readonly DiscordManager _discordManager = new DiscordManager();
         private readonly List<UsersInfo> _knownUsers = new List<UsersInfo>();
 

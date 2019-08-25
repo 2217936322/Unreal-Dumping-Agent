@@ -73,10 +73,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Ceen.Httpd" Version="0.9.7" />
-    <PackageReference Include="Ceen.Mvc" Version="0.9.7" />
     <PackageReference Include="Discord.Net" Version="2.1.1" />
-    <PackageReference Include="Microsoft.ML" Version="1.2.0" />
+    <PackageReference Include="Microsoft.ML" Version="1.3.1" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
   </ItemGroup>
 
