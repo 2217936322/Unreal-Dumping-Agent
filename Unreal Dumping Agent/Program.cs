@@ -34,10 +34,6 @@ namespace Unreal_Dumping_Agent
 
     public class Program
     {
-        private readonly ChatManager _chatManager = new ChatManager();
-        private readonly DiscordManager _discordManager = new DiscordManager();
-        private readonly List<UsersInfo> _knownUsers = new List<UsersInfo>();
-
         #region Paths
         public static string ConfigPath { get; private set; }
         public static string LangsPath { get; private set; }
@@ -64,25 +60,22 @@ namespace Unreal_Dumping_Agent
 
             // Init
             Utils.BotWorkType = Utils.BotType.Local;
-            var initChat = _chatManager.Init();
-            var initDiscord = _discordManager.Init();
+            var initChat = Utils.ChatManager.Init();
+            var initDiscord = Utils.DiscordManager.Init();
 
-            // Wait ChatManager init
+            // Wait init
             await initChat;
             await initDiscord;
 
             // Start
-            _discordManager.Start();
-            _discordManager.MessageHandler += DiscordManager_MessageHandler;
-            _discordManager.ReactionAddedHandler += DiscordManager_ReactionAdded;
-
-            // _httpManager.Start(2911);
+            await Utils.DiscordManager.Start();
+            Utils.DiscordManager.MessageHandler += DiscordManager_MessageHandler;
+            Utils.DiscordManager.ReactionAddedHandler += DiscordManager_ReactionAdded;
 
             // Wait until window closed
             while (Console.ReadLine() != "exit")
                 Thread.Sleep(1);
         }
-
         private static async Task Test()
         {
             Utils.MemObj = new Memory.Memory(Utils.DetectUnrealGame());
@@ -109,26 +102,26 @@ namespace Unreal_Dumping_Agent
         private async Task DiscordManager_MessageHandler(SocketUserMessage message, SocketCommandContext context)
         {
             // Update users
-            var curUser = _knownUsers.FirstOrDefault(u => u.ID == context.User.Id);
+            var curUser = Utils.KnownUsers.FirstOrDefault(u => u.ID == context.User.Id);
             if (curUser == null)
             {
-                _knownUsers.Add(new UsersInfo { ID = context.User.Id });
-                curUser = _knownUsers.First(u => u.ID == context.User.Id);
+                Utils.KnownUsers.Add(new UsersInfo { ID = context.User.Id });
+                curUser = Utils.KnownUsers.First(u => u.ID == context.User.Id);
             }
 
             // message not form DM
             int argPos = 0;
             if (!context.IsPrivate &&
                 message.HasStringPrefix("!agent ", ref argPos) ||
-                message.HasMentionPrefix(_discordManager.CurrentBot, ref argPos))
+                message.HasMentionPrefix(Utils.DiscordManager.CurrentBot, ref argPos))
             {
-                var result = await _discordManager.ExecuteAsync(context, argPos);
+                var result = await Utils.DiscordManager.ExecuteAsync(context, argPos);
                 if (!result.IsSuccess)
                     Utils.ConsoleText("Commands", $"Can't executing a command. Text: {context.Message.Content} | Error: {result.ErrorReason}", ConsoleColor.Red);
             }
 
             // message from DM
-            var uTask = await _chatManager.PredictQuestion(context.Message.Content);
+            var uTask = await Utils.ChatManager.PredictQuestion(context.Message.Content);
             if (uTask.TypeEnum() == EQuestionType.None)
             {
                 await context.User.SendMessageAsync(DiscordText.GetRandomNotUnderstandString());
@@ -171,14 +164,14 @@ namespace Unreal_Dumping_Agent
             if (reaction.User.Value.IsBot)
                 return;
 
-            var knownUser = _knownUsers.FirstOrDefault(user => reaction.UserId == user.ID);
+            var knownUser = Utils.KnownUsers.FirstOrDefault(user => reaction.UserId == user.ID);
             if (knownUser == null)
                 return;
 
             // React Stuff
             var message = (RestUserMessage)await reaction.Channel.GetMessageAsync(reaction.MessageId);
-            var addReact = message.RemoveReactionsAsync(
-                _discordManager.CurrentBot,
+            var removeReact = message.RemoveReactionsAsync(
+                Utils.DiscordManager.CurrentBot,
                 DiscordText.GenEmojiNumberList(9, false).Where(r => r.Name != reaction.Emote.Name).ToArray());
 
             var embed = message.Embeds.FirstOrDefault();
@@ -207,7 +200,7 @@ namespace Unreal_Dumping_Agent
             else if (embed.Title.Contains("GObject"))
                 knownUser.GobjectsPtr = address;
 
-            await addReact;
+            await removeReact;
         }
         #endregion
 
@@ -351,7 +344,11 @@ namespace Unreal_Dumping_Agent
                     return;
                 }
 
-                await new SdkGenerator(curUser.GobjectsPtr, curUser.GnamesPtr).Start(requestInfo);
+                var dumpState = await new SdkGenerator(curUser.GobjectsPtr, curUser.GnamesPtr).Start(requestInfo);
+                if (dumpState.State == SdkGenerator.GeneratorState.Good)
+                    await context.Channel.SendMessageAsync($"**Take** => {dumpState.StartTime - DateTime.Now:T}");
+                else
+                    await context.Channel.SendMessageAsync($"**Problem** => {dumpState.State:G}");
             }
             #endregion
 
@@ -369,11 +366,11 @@ namespace Unreal_Dumping_Agent
             else if (uTask.TypeEnum() == EQuestionType.Help)
             {
                 var emb = new EmbedBuilder();
+                emb.WithUrl(Utils.DonateUrl);
+                emb.WithFooter(Utils.DiscordFooterText, Utils.DiscordFooterImg);
 
                 emb.Title = "How To Use";
                 emb.Description = File.ReadAllText(Path.Combine(ConfigPath, "help.txt"));
-                emb.WithUrl(Utils.DonateUrl);
-                emb.WithFooter(Utils.DiscordFooterText, Utils.DiscordFooterImg);
 
                 await context.Channel.SendMessageAsync(embed: emb.Build());
             }

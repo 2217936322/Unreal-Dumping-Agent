@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Unreal_Dumping_Agent.Discord.Misc;
 using Unreal_Dumping_Agent.Memory;
 using Unreal_Dumping_Agent.UtilsHelper;
 using static Unreal_Dumping_Agent.Memory.PatternScanner;

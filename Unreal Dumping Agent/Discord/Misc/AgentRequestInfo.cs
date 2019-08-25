@@ -1,14 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using Discord;
 using Discord.Commands;
 using Discord.Rest;
 using Discord.WebSocket;
-using Unreal_Dumping_Agent.Discord.Misc;
 
-namespace Unreal_Dumping_Agent.UtilsHelper
+namespace Unreal_Dumping_Agent.Discord.Misc
 {
+    /// <summary>
+    /// Contains Information About User That's Send A Request For The Bot
+    /// </summary>
     public class AgentRequestInfo
     {
         public UsersInfo User { get; set; }

@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord;
+using Unreal_Dumping_Agent.Discord.Misc;
 using Unreal_Dumping_Agent.Tools.SdkGen;
 using Unreal_Dumping_Agent.Tools.SdkGen.Engine;
 using Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4;
@@ -17,8 +18,9 @@ namespace Unreal_Dumping_Agent.Tools
         #region Useful types
         public enum GeneratorState
         {
-            Bad,
+            None,
             Good,
+            BadGenerator,
             BadGObject,
             BadGName,
             BadSdkLang
@@ -26,11 +28,11 @@ namespace Unreal_Dumping_Agent.Tools
         public class GenRetInfo
         {
             public GeneratorState State;
-            public DateTime TookTime;
+            public DateTime StartTime;
         };
         #endregion
 
-        private int _donePackagesCount = 0;
+        private int _donePackagesCount;
         private readonly IntPtr _gobjects, _gnames;
         private AgentRequestInfo _requestInfo;
         private bool _sdkWork;
@@ -148,6 +150,7 @@ namespace Unreal_Dumping_Agent.Tools
         {
             var ret = new GenRetInfo();
             _requestInfo = requestInfo;
+            ret.StartTime = DateTime.Now;
 
             #region Check Address
             var uDiscord = UpdateDiscordState("State", "Check Address !!");
@@ -190,37 +193,34 @@ namespace Unreal_Dumping_Agent.Tools
             #region Init Generator
             // Init Generator Settings
             if (!Generator.Initialize())
-                return new GenRetInfo { State = GeneratorState.Bad };
+                return new GenRetInfo { State = GeneratorState.BadGenerator };
 
             // Init Generator info
-            //MODULEENTRY32 mod = { };
-            //Utils::MemoryObj->GetModuleInfo(startInfo.GameModule, mod);
-
             Generator.SdkPath = Path.Combine(Program.GenPath, "SDK");
             Generator.LangPaths = Program.LangsPath;
+            Generator.IsGObjectsChunks = ObjectsStore.GObjects.IsChunksAddress;
+
             Generator.GameName = "GameName";
             Generator.GameVersion = "1.0.0";
             Generator.SdkType = SdkType.Internal;
-            Generator.IsGObjectsChunks = ObjectsStore.GObjects.IsChunksAddress;
             Generator.SdkLangName = "Cpp";
             Generator.GameModule = "GameModule";
-            Generator.GameModuleBase = (IntPtr)0x0;
 
-            Directory.CreateDirectory(Generator.SdkPath);
+            Utils.MemObj.GetModuleInfo(Generator.GameModule, out var mod);
+            Generator.GameModuleBase = mod.BaseAddress;
 
             if (!InitSdkLang())
                 return new GenRetInfo { State = GeneratorState.BadSdkLang };
             #endregion
 
-            #region Dump Names/Objects
-            // ToDo: Dump To Files
-            // Dump To Files
-            //if (Utils::GenObj->ShouldDumpArrays())
+            Directory.CreateDirectory(Generator.SdkPath);
+
+            #region Dump Names/Objects To Files
+            //if (Generator.ShouldDumpArrays)
             //{
             //    *startInfo.State = "Dumping (GNames/GObjects).";
             //    Dump(outputDirectory, *startInfo.State);
             //    *startInfo.State = "Dump (GNames/GObjects) Done.";
-            //    Sleep(2 * 1000);
             //}
             #endregion
 
@@ -372,7 +372,7 @@ namespace Unreal_Dumping_Agent.Tools
             await SdkAfterFinish(_packages);
 
             _sdkWork = false;
-            await uDiscord; uDiscord = UpdateDiscordState("State", $"FINIIIISHED !!");
+            await uDiscord; await UpdateDiscordState("State", $"FINIIIISHED !!");
         }
 
         /// <summary>

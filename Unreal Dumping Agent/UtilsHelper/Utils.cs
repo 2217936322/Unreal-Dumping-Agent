@@ -8,6 +8,9 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
+using Unreal_Dumping_Agent.Chat;
+using Unreal_Dumping_Agent.Discord;
+using Unreal_Dumping_Agent.Discord.Misc;
 using Unreal_Dumping_Agent.Json;
 using Unreal_Dumping_Agent.Memory;
 using Unreal_Dumping_Agent.Tools.SdkGen;
@@ -24,6 +27,10 @@ namespace Unreal_Dumping_Agent.UtilsHelper
         public const string DonateUrl = "https://www.patreon.com/CorrM";
         public const string DiscordFooterText = "Donate to keep me working :), (Click on message title)";
         public const string DiscordFooterImg = "https://c5.patreon.com/external/favicon/favicon-16x16.png?v=69kMELnXkB";
+
+        public static readonly ChatManager ChatManager = new ChatManager();
+        public static readonly DiscordManager DiscordManager = new DiscordManager();
+        public static readonly List<UsersInfo> KnownUsers = new List<UsersInfo>();
 
         #region Extinction
         public static T[] SubArray<T>(this T[] data, int index, int length)
