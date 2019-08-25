@@ -1,8 +1,26 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
 using Microsoft.ML.Data;
 
 namespace Unreal_Dumping_Agent.Chat
 {
+    public static class ChatStructs
+    {
+        // Keys must be lower
+        public static readonly Dictionary<string, EQuestionTask> ChatTasks = new Dictionary<string, EQuestionTask>
+        {
+            { "gname", EQuestionTask.GNames },
+            { "gnames", EQuestionTask.GNames },
+            { "gobject", EQuestionTask.GObject },
+            { "gobjects", EQuestionTask.GObject },
+            { "process", EQuestionTask.Process },
+            { "target", EQuestionTask.Process },
+            { "sdk", EQuestionTask.Sdk },
+            { "tool", EQuestionTask.Tool },
+        };
+    }
+    
+
     public enum EQuestionType
     {
         None = 0,

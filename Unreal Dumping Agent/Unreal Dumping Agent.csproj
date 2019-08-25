@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -39,10 +39,10 @@
     <None Remove="Config\EngineCore\4.14.1.json" />
     <None Remove="Config\EngineCore\DeadByDayLight.json" />
     <None Remove="Config\EngineCore\EngineBase.json" />
+    <None Remove="Config\help.txt" />
     <None Remove="Config\Langs\Cpp\Internal\Basic.cpp" />
     <None Remove="Config\Langs\Cpp\Internal\Basic.h" />
     <None Remove="Config\Settings.json" />
-    <None Remove="ML_Data\learn.txt" />
   </ItemGroup>
 
   <ItemGroup>
@@ -55,6 +55,9 @@
     <Content Include="Config\EngineCore\EngineBase.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Config\help.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Config\Langs\Cpp\Internal\Basic.cpp">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -64,7 +67,7 @@
     <Content Include="Config\Settings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="ML_Data\learn.txt">
+    <Content Include="Config\learn.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

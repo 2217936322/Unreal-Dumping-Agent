@@ -78,12 +78,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Langs
 
     public class CppLang : SdkLang
     {
-        public string IncludePath { get; }
-
-        public CppLang()
-        {
-            IncludePath = Path.Combine(Generator.LangPaths, "Cpp", Generator.SdkType == SdkType.External ? "External" : "Internal");
-        }
+        public string IncludePath => Path.Combine(Generator.LangPaths, "Cpp", Generator.SdkType == SdkType.External ? "External" : "Internal");
 
         #region FileStruct
         public enum FileContentType

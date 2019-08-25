@@ -37,7 +37,6 @@ namespace Unreal_Dumping_Agent.Tools
         private List<Package> _packages = new List<Package>();
         private List<GenericTypes.UEObject> _packageObjects = new List<GenericTypes.UEObject>();
 
-
         public SdkGenerator(IntPtr gobjects, IntPtr gnames)
         {
             _gobjects = gobjects;

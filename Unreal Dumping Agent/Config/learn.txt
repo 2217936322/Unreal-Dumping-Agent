@@ -35,7 +35,7 @@ open||CorrM||6
 start||CorrM||6
 
 // QuestionType == Help
-hekp||CorrM||7
+help||CorrM||7
 how to use||CorrM||7
 how this work||CorrM||7
 how that work||CorrM||7

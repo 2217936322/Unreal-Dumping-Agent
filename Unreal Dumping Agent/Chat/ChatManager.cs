@@ -10,16 +10,6 @@ namespace Unreal_Dumping_Agent.Chat
 {
     public class ChatManager
     {
-        // Keys must be lower
-        private static readonly Dictionary<string, EQuestionTask> _chatTasks = new Dictionary<string, EQuestionTask>
-        {
-            { "gname", EQuestionTask.GNames },
-            { "gnames", EQuestionTask.GNames },
-            { "gobject", EQuestionTask.GObject },
-            { "gobjects", EQuestionTask.GObject },
-            { "process", EQuestionTask.Process },
-            { "target", EQuestionTask.Process },
-        };
         private static string AppPath => Path.GetDirectoryName(Environment.GetCommandLineArgs()[0]);
         private static string ModelPath => Path.Combine(AppPath, "Models", "model.zip");
 
@@ -47,7 +37,7 @@ namespace Unreal_Dumping_Agent.Chat
         }
         private static IEnumerable<ChatQuestion> LoadTrainData()
         {
-            return LoadData(Path.Combine(Environment.CurrentDirectory, "ML_Data", "learn.txt"));
+            return LoadData(Path.Combine(Program.ConfigPath, "learn.txt"));
         }
         private static IEnumerable<ChatQuestion> LoadTestData()
         {
@@ -117,12 +107,13 @@ namespace Unreal_Dumping_Agent.Chat
             // Load model form file
             // ITransformer loadedModel = _mlContext.Model.Load(_modelPath, out var modelInputSchema);
 
-            ChatQuestion singleQuestion = new ChatQuestion() { QuestionText = question.ToLower() };
+            ChatQuestion singleQuestion = new ChatQuestion { QuestionText = question.ToLower() };
             foreach (var s in question.ToLower().Split(' '))
             {
-                if (!_chatTasks.ContainsKey(s)) continue;
+                if (!ChatStructs.ChatTasks.ContainsKey(s))
+                    continue;
 
-                singleQuestion.QuestionTask = (int)_chatTasks[s];
+                singleQuestion.QuestionTask = (int)ChatStructs.ChatTasks[s];
                 break;
             }
 

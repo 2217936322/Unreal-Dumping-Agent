@@ -126,23 +126,10 @@ namespace Unreal_Dumping_Agent.UtilsHelper
                 Console.ResetColor();
             }
         }
-        public static int GamePointerSize()
+        public static void OpenFolder(string folderPath)
         {
-            return MemObj.Is64Bit ? 0x8 : 0x4;
-        }
-        public static IntPtr GameStartAddress()
-        {
-            // Get System Info
-            Win32.GetSystemInfo(out var si);
-
-            return si.MinimumApplicationAddress;
-        }
-        public static IntPtr GameEndAddress()
-        {
-            // Get System Info
-            Win32.GetSystemInfo(out var si);
-
-            return si.MaximumApplicationAddress;
+            if (Directory.Exists(folderPath))
+                Process.Start(folderPath);
         }
         #endregion
 
@@ -227,6 +214,24 @@ namespace Unreal_Dumping_Agent.UtilsHelper
         #endregion
 
         #region Address Stuff
+        public static int GamePointerSize()
+        {
+            return MemObj.Is64Bit ? 0x8 : 0x4;
+        }
+        public static IntPtr GameStartAddress()
+        {
+            // Get System Info
+            Win32.GetSystemInfo(out var si);
+
+            return si.MinimumApplicationAddress;
+        }
+        public static IntPtr GameEndAddress()
+        {
+            // Get System Info
+            Win32.GetSystemInfo(out var si);
+
+            return si.MaximumApplicationAddress;
+        }
         public static bool IsValidRemoteAddress(IntPtr address)
         {
             if (MemObj == null || address == IntPtr.Zero || address.ToInt64() < 0)

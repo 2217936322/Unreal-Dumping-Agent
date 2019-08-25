@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -40,6 +41,12 @@ namespace Unreal_Dumping_Agent
         private readonly DiscordManager _discordManager = new DiscordManager();
         private readonly List<UsersInfo> _knownUsers = new List<UsersInfo>();
 
+        #region Paths
+        public static string ConfigPath { get; private set; }
+        public static string LangsPath { get; private set; }
+        public static string GenPath { get; private set; }
+        #endregion
+
         #region SdkLang
         public static Dictionary<string, SdkLang> SupportedLangs = new Dictionary<string, SdkLang>
         {
@@ -47,17 +54,16 @@ namespace Unreal_Dumping_Agent
         };
         #endregion
 
-        #region Paths
-        public static string LangsPath => Path.Combine(Environment.CurrentDirectory, "Config", "Langs");
-        public static string GenPath => Path.Combine(Environment.CurrentDirectory, "Dump");
-        #endregion
-
         private static void Main() => new Program().MainAsync().GetAwaiter().GetResult();
         private async Task MainAsync()
         {
-            Console.WriteLine($"[Info] Started.{Environment.CurrentDirectory}");
             //await Test();
             //return;
+
+            // Init Paths
+            ConfigPath = Path.Combine(Environment.CurrentDirectory, "Config");
+            LangsPath = Path.Combine(ConfigPath, "Langs");
+            GenPath = Path.Combine(Environment.CurrentDirectory, "Dump");
 
             // Init
             Utils.BotWorkType = Utils.BotType.Local;
@@ -355,14 +361,24 @@ namespace Unreal_Dumping_Agent
             #region Open
             else if (uTask.TypeEnum() == EQuestionType.Open)
             {
-
+                if (uTask.TaskEnum() == EQuestionTask.Sdk)
+                    Utils.OpenFolder(GenPath);
+                else if (uTask.TaskEnum() == EQuestionTask.Tool)
+                    Utils.OpenFolder(Environment.CurrentDirectory);
             }
             #endregion
 
             #region Help
             else if (uTask.TypeEnum() == EQuestionType.Help)
             {
+                var emb = new EmbedBuilder();
 
+                emb.Title = "How To Use";
+                emb.Description = File.ReadAllText(Path.Combine(ConfigPath, "help.txt"));
+                emb.WithUrl(Utils.DonateUrl);
+                emb.WithFooter(Utils.DiscordFooterText, Utils.DiscordFooterImg);
+
+                await context.Channel.SendMessageAsync(embed: emb.Build());
             }
             #endregion
         }
