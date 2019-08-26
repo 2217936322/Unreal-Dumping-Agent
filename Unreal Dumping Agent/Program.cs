@@ -374,7 +374,7 @@ namespace Unreal_Dumping_Agent
 
                 await context.Channel.SendMessageAsync(embed: emb.Build());
 
-                string gg = await Utils.DiscordManager.StringQuestion(requestInfo, "Are u okay .?");
+                string gg = await Utils.DiscordManager.OptionsQuestion(requestInfo, "Are u okay .?", new List<string> { "Islam" , "CorrM", "HHH", "GGG", "ZZZ", "LLL" });
                 Console.WriteLine(gg);
             }
             #endregion
