@@ -15,7 +15,6 @@ namespace Unreal_Dumping_Agent.Discord
     public class DiscordManager
     {
         // ToDo: Add to settings file
-        // Continue QuestionMessage, Add QuestionListMessage => List Of Options As String Messages with Reaction (Yes) for every message
         private const string BotToken = "NjAxNjM4NjY1NTg4MDQ3OTEw.XTFNxA.nGeHiWe-ZAG89DsF98RbR-X9bKE";
         private bool _init;
         private CommandService _commands;
@@ -74,7 +73,8 @@ namespace Unreal_Dumping_Agent.Discord
             Client.ReactionRemoved += Client_OnReactionRemoved;
 
             Client.Ready += Client_Ready;
-            Client.Log += Client_Log;
+            if (Utils.IsDebug())
+                Client.Log += Client_Log;
 
             _init = true;
         }
@@ -265,8 +265,6 @@ namespace Unreal_Dumping_Agent.Discord
             // Send Options
             foreach (var option in options)
                 msgList.Add(await requestInfo.Context.Channel.SendMessageAsync($"`{option}`"));
-
-            await requestInfo.Context.Channel.SendMessageAsync($"------------------");
 
             // Send (Yes) Emote
             foreach (var message in msgList)

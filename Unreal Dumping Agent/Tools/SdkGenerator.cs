@@ -200,15 +200,21 @@ namespace Unreal_Dumping_Agent.Tools
             Generator.LangPaths = Program.LangsPath;
             Generator.IsGObjectsChunks = ObjectsStore.GObjects.IsChunksAddress;
 
-            Generator.GameName = "GameName";
-            Generator.GameVersion = "1.0.0";
-            Generator.SdkType = SdkType.Internal;
-            Generator.SdkLangName = "Cpp";
-            Generator.GameModule = "GameModule";
+            // Ask User For Information
+            Generator.GameName = await Utils.DiscordManager.StringQuestion(_requestInfo, "Game Name .?");
+            Generator.GameVersion = await Utils.DiscordManager.StringQuestion(_requestInfo, "Game Version .?");
+            Generator.GameModule = await Utils.DiscordManager.OptionsQuestion(_requestInfo, "Game Module .?", 
+                Utils.MemObj.GetModuleList().Where(m => !m.ModuleName.ToLower().EndsWith(".dll")).Select(m => m.ModuleName).ToList());
 
+            Generator.SdkType = await Utils.DiscordManager.YesNoMessage(_requestInfo, "Internal SDK .?") ? SdkType.Internal : SdkType.External;
+            Generator.SdkLangName = await Utils.DiscordManager.OptionsQuestion(_requestInfo, "Syntax Lang .?", 
+                Program.SupportedLangs.Select(s => s.Key).ToList());
+
+            // Get Module Info
             Utils.MemObj.GetModuleInfo(Generator.GameModule, out var mod);
             Generator.GameModuleBase = mod.BaseAddress;
 
+            // Init Sdk Lang
             if (!InitSdkLang())
                 return new GenRetInfo { State = GeneratorState.BadSdkLang };
             #endregion
@@ -229,6 +235,7 @@ namespace Unreal_Dumping_Agent.Tools
 
             // Process Packages
             await ProcessPackages();
+            ret.State = GeneratorState.Good;
 
             return ret;
         }
@@ -240,7 +247,7 @@ namespace Unreal_Dumping_Agent.Tools
         private static List<GenericTypes.UEObject> CollectPackages()
         {
             var ret = ObjectsStore.GObjects.Objects
-                .AsParallel()
+                ////////////////////////////////////////////////////////////////////.AsParallel()
                 .Where(curObj => curObj.IsValid())
 
                 // Get Package for every object

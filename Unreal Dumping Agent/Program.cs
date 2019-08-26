@@ -152,12 +152,13 @@ namespace Unreal_Dumping_Agent
             }
 
             /* COMMANDS START HERE */
-            await context.User.SendMessageAsync($"ok, that's what i think you need to do:\n`{uTask.TypeEnum():G}` => `{uTask.TaskEnum():G}`\n--------------------------");
+            if (Utils.IsDebug())
+                await context.User.SendMessageAsync($"ok, that's what i think you need to do:\n`{uTask.TypeEnum():G}` => `{uTask.TaskEnum():G}`\n--------------------------");
 
             // Don't Wait
-#pragma warning disable 4014
+            #pragma warning disable 4014
             ExecuteTasks(curUser, uTask, message, context);
-#pragma warning restore 4014
+            #pragma warning restore 4014
         }
         private async Task DiscordManager_ReactionAdded(SocketReaction reaction)
         {
@@ -172,7 +173,7 @@ namespace Unreal_Dumping_Agent
             var message = (RestUserMessage)await reaction.Channel.GetMessageAsync(reaction.MessageId);
             var removeReact = message.RemoveReactionsAsync(
                 Utils.DiscordManager.CurrentBot,
-                DiscordText.GenEmojiNumberList(9, false).Where(r => r.Name != reaction.Emote.Name).ToArray());
+                message.Reactions.Where(r => r.Value.IsMe && r.Key.Name != reaction.Emote.Name).Select(r => r.Key).ToArray());
 
             var embed = message.Embeds.FirstOrDefault();
             if (embed == null)
@@ -373,9 +374,6 @@ namespace Unreal_Dumping_Agent
                 emb.Description = File.ReadAllText(Path.Combine(ConfigPath, "help.txt"));
 
                 await context.Channel.SendMessageAsync(embed: emb.Build());
-
-                string gg = await Utils.DiscordManager.OptionsQuestion(requestInfo, "Are u okay .?", new List<string> { "Islam" , "CorrM", "HHH", "GGG", "ZZZ", "LLL" });
-                Console.WriteLine(gg);
             }
             #endregion
         }
