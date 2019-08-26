@@ -373,6 +373,9 @@ namespace Unreal_Dumping_Agent
                 emb.Description = File.ReadAllText(Path.Combine(ConfigPath, "help.txt"));
 
                 await context.Channel.SendMessageAsync(embed: emb.Build());
+
+                string gg = await Utils.DiscordManager.StringQuestion(requestInfo, "Are u okay .?");
+                Console.WriteLine(gg);
             }
             #endregion
         }

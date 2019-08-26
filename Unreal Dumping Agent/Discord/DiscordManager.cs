@@ -14,10 +14,21 @@ namespace Unreal_Dumping_Agent.Discord
     public class DiscordManager
     {
         // ToDo: Add to settings file
+        // Continue QuestionMessage, Add QuestionListMessage => List Of Options As String Messages with Reaction (Yes) for every message
         private const string BotToken = "NjAxNjM4NjY1NTg4MDQ3OTEw.XTFNxA.nGeHiWe-ZAG89DsF98RbR-X9bKE";
         private bool _init;
         private CommandService _commands;
+
+        /// <summary>
+        /// Key     => MessageID
+        /// Value   => User Emotes
+        /// </summary>
         private Dictionary<ulong, List<IEmote>> _waitedReactions;
+        /// <summary>
+        /// Key     => UserID
+        /// Value   => Answer
+        /// </summary>
+        private Dictionary<ulong, string> _waitQuestion;
 
         #region Events
         public delegate Task MessageReceived(SocketUserMessage message, SocketCommandContext context);
@@ -45,6 +56,7 @@ namespace Unreal_Dumping_Agent.Discord
                 LogLevel = Utils.IsDebug() ? LogSeverity.Debug : LogSeverity.Error
             });
             _waitedReactions = new Dictionary<ulong, List<IEmote>>();
+            _waitQuestion = new Dictionary<ulong, string>();
 
             // Add All Commands to Execute
             await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), null);
@@ -69,6 +81,17 @@ namespace Unreal_Dumping_Agent.Discord
             await Client.StartAsync();
         }
 
+        private async Task Client_Ready()
+        {
+            CurrentBot = Client.GetUser(Client.CurrentUser.Id);
+            await Client.SetGameAsync("Dumping");
+        }
+        private static Task Client_Log(LogMessage message)
+        {
+            Utils.ConsoleText(message.Source, message.Message, ConsoleColor.Green);
+            return Task.CompletedTask;
+        }
+
         #region Reactions
         private Task Client_OnReactionAdded(Cacheable<IUserMessage, ulong> cacheAble, ISocketMessageChannel channel, SocketReaction reaction)
         {
@@ -83,28 +106,28 @@ namespace Unreal_Dumping_Agent.Discord
         }
         #endregion
 
-        private async Task Client_Ready()
-        {
-            CurrentBot = Client.GetUser(Client.CurrentUser.Id);
-            await Client.SetGameAsync("Dumping");
-        }
-        private static Task Client_Log(LogMessage message)
-        {
-            Utils.ConsoleText(message.Source, message.Message, ConsoleColor.Green);
-            return Task.CompletedTask;
-        }
-
         #region MessageHandler
-        private async Task Client_MessageReceived(SocketMessage messageParam)
+        private Task Client_MessageReceived(SocketMessage messageParam)
         {
             var message = (SocketUserMessage)messageParam;
             var context = new SocketCommandContext(Client, message);
 
             // Bad ??
-            if (context.Message == null || string.IsNullOrEmpty(context.Message.Content)) return;
-            if (context.User.IsBot) return;
+            if (context.Message == null || string.IsNullOrEmpty(context.Message.Content))
+                return Task.CompletedTask;
 
-            await Task.Run(() => MessageHandler?.Invoke(message, context));
+            if (context.User.IsBot)
+                return Task.CompletedTask;
+
+            // Answer for question
+            if (_waitQuestion.ContainsKey(message.Author.Id))
+                _waitQuestion[message.Author.Id] = message.Content;
+
+            // not question answer .?, pass it to MessageHandler
+            else
+                return Task.Run(() => MessageHandler?.Invoke(message, context));
+
+            return Task.CompletedTask;
         }
         public Task<IResult> ExecuteAsync(ICommandContext context, int argPos)
         {
@@ -112,6 +135,7 @@ namespace Unreal_Dumping_Agent.Discord
         }
         #endregion
 
+        #region DiscordQuestion
         /// <summary>
         /// Wait To Receive One Of <see cref="waitedEmojis"/>
         /// </summary>
@@ -132,17 +156,35 @@ namespace Unreal_Dumping_Agent.Discord
         }
 
         /// <summary>
+        /// Wait To Receive Next Massage After Ask
+        /// </summary>
+        /// <param name="userId">User ID To Wait Response</param>
+        /// <returns>User String</returns>
+        private async Task<string> WaitStringQuestion(ulong userId)
+        {
+            _waitQuestion[userId] = string.Empty;
+
+            while (_waitQuestion[userId].Empty())
+                await Task.Delay(8);
+
+            string ret = _waitQuestion[userId];
+            _waitQuestion.Remove(userId);
+            return ret;
+        }
+
+
+        /// <summary>
         /// Create A Discord Question, That's Have 2 Reactions (Yes, No)
         /// </summary>
         /// <param name="requestInfo">User To Send</param>
-        /// <param name="text">Message Text</param>
+        /// <param name="question">Message Text</param>
         /// <returns>True If Yes</returns>
-        public async Task<bool> YesNoMessage(AgentRequestInfo requestInfo, string text)
+        public async Task<bool> YesNoMessage(AgentRequestInfo requestInfo, string question)
         {
             //                                   YES                         NO
-            var emojis = new IEmote[] {new Emoji("\u2705"), new Emoji("\u274C")};
+            var emojis = new IEmote[] { new Emoji("\u2705"), new Emoji("\u274C") };
 
-            var message = await requestInfo.Context.Channel.SendMessageAsync(text);
+            var message = await requestInfo.Context.Channel.SendMessageAsync($"**{question}**");
             await message.AddReactionsAsync(emojis);
 
             var answer = await WaitReaction(message.Id, emojis);
@@ -155,5 +197,34 @@ namespace Unreal_Dumping_Agent.Discord
             return answer.Name == "\u2705";
         }
 
+        /// <summary>
+        /// Create A Discord Question, And Give User Ability To Response As Text
+        /// </summary>
+        /// <param name="requestInfo">User To Send</param>
+        /// <param name="question">Message Text</param>
+        /// <returns>User Response Text</returns>
+        public async Task<string> StringQuestion(AgentRequestInfo requestInfo, string question)
+        {
+            await requestInfo.Context.Channel.SendMessageAsync($"**{question}**");
+            string answer = await WaitStringQuestion(requestInfo.User.ID);
+
+            return answer;
+        }
+
+        /// <summary>
+        /// Create A Discord Question As List Options
+        /// </summary>
+        /// <param name="requestInfo">User To Send</param>
+        /// <param name="question">Message Text</param>
+        /// <param name="options">List Of Options</param>
+        /// <returns>User Response Text</returns>
+        public async Task<string> OptionsQuestion(AgentRequestInfo requestInfo, string question, List<string> options)
+        {
+            var message = await requestInfo.Context.Channel.SendMessageAsync(question);
+            string answer = await WaitStringQuestion(requestInfo.User.ID);
+
+            return answer;
+        }
+        #endregion
     }
 }
