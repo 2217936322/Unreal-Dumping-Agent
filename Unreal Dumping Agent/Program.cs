@@ -192,7 +192,7 @@ namespace Unreal_Dumping_Agent
 
             // Get Address From String
             string str = embed.Description;
-            var spilled = str.Split(new[] { "0x" }, StringSplitOptions.None);
+            var spilled = str.Split("0x");
             var address = new IntPtr(long.Parse(spilled[reactNum].Split('`')[0], NumberStyles.HexNumber));
 
             if (embed.Title.Contains("GNames"))
@@ -219,7 +219,9 @@ namespace Unreal_Dumping_Agent
                 uTask.TypeEnum() == EQuestionType.Find && uTask.TaskEnum() == EQuestionTask.Process)
             {
                 // Try to get process id
-                bool findProcessId = int.TryParse(Regex.Match(context.Message.Content, @"\d+").Value, out int processId);
+                bool findProcessId = !context.Message.Content.Contains("0x")
+                    ? int.TryParse(Regex.Match(context.Message.Content, @"\d+").Value, out int processId)
+                    : int.TryParse(context.Message.Content.Split("0x")[1], NumberStyles.HexNumber, new NumberFormatInfo(), out processId);
 
                 // Try auto detect it
                 if (!findProcessId)
@@ -245,15 +247,16 @@ namespace Unreal_Dumping_Agent
                     ueVersion = "Can Not Detected";
 
                 // Load Engine File
-                // TODO: Make engine name dynamically stetted by user 
-                string corePath = Path.Combine(Environment.CurrentDirectory, "Config", "EngineCore");
-                var filesName = Directory.EnumerateFiles(corePath).Select(Path.GetFileName).ToList();
-                if (!filesName.Contains($"{ueVersion}.json"))
-                {
-                    if (ueVersion != "Can't Detected")
-                        await context.User.SendMessageAsync($"Can't found core engine called `{ueVersion}.json`.\nSo i will use `EngineBase.json`");
-                    ueVersion = "EngineBase";
-                }
+                // TODO: Make engine name dynamically stetted by user
+                string corePath = Path.Combine(ConfigPath, "EngineCore");
+                var coreNames = Directory.EnumerateFiles(corePath).Select(Path.GetFileName).ToList();
+
+                string ueVersionO = ueVersion;
+                ueVersion = await Utils.DiscordManager.OptionsQuestion(
+                    requestInfo, 
+                    $"Select EngineCore file to use.{Utils.NLine}(Detected For Your Target Is `{ueVersion}`)",
+                    coreNames);
+
                 JsonReflector.LoadJsonEngine(ueVersion);
 
                 var emb = new EmbedBuilder
@@ -265,10 +268,12 @@ namespace Unreal_Dumping_Agent
                 emb.WithUrl(Utils.DonateUrl);
                 emb.WithFooter(Utils.DiscordFooterText, Utils.DiscordFooterImg);
 
+                emb.AddField("Process Handle", $"0x{Utils.MemObj.ProcessHandle.ToInt32():X} | {Utils.MemObj.ProcessHandle.ToInt32()}");
+                emb.AddField("Game Architecture", Utils.MemObj.Is64Bit ? "64Bit" : "32bit");
                 emb.AddField("Window Name", Utils.MemObj.TargetProcess.MainWindowTitle);
                 emb.AddField("Exe Name", Path.GetFileName(Utils.MemObj.TargetProcess.MainModule?.FileName));
-                emb.AddField("Unreal Version", ueVersion);
-                emb.AddField("Game Architecture", Utils.MemObj.Is64Bit ? "64Bit" : "32bit");
+                emb.AddField("Modules Count", Utils.MemObj.TargetProcess.Modules.Count);
+                emb.AddField("Unreal Version", ueVersionO);
                 
                 await context.User.SendMessageAsync(embed: emb.Build());
             }
@@ -347,9 +352,9 @@ namespace Unreal_Dumping_Agent
 
                 var dumpState = await new SdkGenerator(curUser.GobjectsPtr, curUser.GnamesPtr).Start(requestInfo);
                 if (dumpState.State == SdkGenerator.GeneratorState.Good)
-                    await context.Channel.SendMessageAsync($"**Take** => {dumpState.StartTime - DateTime.Now:T}");
+                    await context.Channel.SendMessageAsync($"__Take__ => {DateTime.Now - dumpState.StartTime:t}");
                 else
-                    await context.Channel.SendMessageAsync($"**Problem** => {dumpState.State:G}");
+                    await context.Channel.SendMessageAsync($"__Problem__ => {dumpState.State:G}");
             }
             #endregion
 
@@ -374,6 +379,32 @@ namespace Unreal_Dumping_Agent
                 emb.Description = File.ReadAllText(Path.Combine(ConfigPath, "help.txt"));
 
                 await context.Channel.SendMessageAsync(embed: emb.Build());
+            }
+            #endregion
+
+            #region Set
+            else if (uTask.TypeEnum() == EQuestionType.Set)
+            {
+                bool foundAddress = long.TryParse(context.Message.Content.Split("0x")[1],
+                        NumberStyles.HexNumber, new NumberFormatInfo(), out long address);
+
+                if (!foundAddress)
+                    await context.Channel.SendMessageAsync($"**What to set** !!, __I can't see any thing__.!");
+
+                if (uTask.TaskEnum() == EQuestionTask.GNames)
+                {
+                    if (Utils.IsValidGNamesAddress((IntPtr)address))
+                        curUser.GnamesPtr = (IntPtr)address;
+                    else
+                        await context.Channel.SendMessageAsync($"**Looks wrong address** !!, `Remember i need a static address`.");
+                }
+                else if (uTask.TaskEnum() == EQuestionTask.GObject)
+                {
+                    if (Utils.IsTUobjectArray((IntPtr)address))
+                        curUser.GobjectsPtr = (IntPtr)address;
+                    else
+                        await context.Channel.SendMessageAsync($"**Looks wrong address** !!, `Remember i need a static address`.");
+                }
             }
             #endregion
         }

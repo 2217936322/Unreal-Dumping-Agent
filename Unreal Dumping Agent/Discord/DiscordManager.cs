@@ -71,8 +71,8 @@ namespace Unreal_Dumping_Agent.Discord
             Client.MessageReceived += Client_MessageReceived;
             Client.ReactionAdded += Client_OnReactionAdded;
             Client.ReactionRemoved += Client_OnReactionRemoved;
-
             Client.Ready += Client_Ready;
+
             if (Utils.IsDebug())
                 Client.Log += Client_Log;
 
@@ -132,7 +132,7 @@ namespace Unreal_Dumping_Agent.Discord
             if (context.Message == null || string.IsNullOrEmpty(context.Message.Content))
                 return Task.CompletedTask;
 
-            if (context.User.IsBot)
+            if (context.User.IsBot || message.Author.Id == CurrentBot.Id)
                 return Task.CompletedTask;
 
             // Answer for question
@@ -220,7 +220,7 @@ namespace Unreal_Dumping_Agent.Discord
             //                                   YES                         NO
             var emojis = new IEmote[] { new Emoji("\u2705"), new Emoji("\u274C") };
 
-            var message = await requestInfo.Context.Channel.SendMessageAsync($"> **{question}**");
+            var message = await requestInfo.Context.Channel.SendMessageAsync($">>> **{question}**");
             await message.AddReactionsAsync(emojis);
 
             var answer = await WaitReaction(message.Id, emojis);
@@ -241,7 +241,7 @@ namespace Unreal_Dumping_Agent.Discord
         /// <returns>User Response Text</returns>
         public async Task<string> StringQuestion(AgentRequestInfo requestInfo, string question)
         {
-            await requestInfo.Context.Channel.SendMessageAsync($"> **{question}**");
+            await requestInfo.Context.Channel.SendMessageAsync($">>> **{question}**");
             string answer = await WaitStringQuestion(requestInfo.User.ID);
 
             return answer;
@@ -260,7 +260,7 @@ namespace Unreal_Dumping_Agent.Discord
             var msgList = new List<RestUserMessage>();
 
             // Send Question
-            await requestInfo.Context.Channel.SendMessageAsync($"> **{question}**");
+            await requestInfo.Context.Channel.SendMessageAsync($">>> **{question}**");
 
             // Send Options
             foreach (var option in options)

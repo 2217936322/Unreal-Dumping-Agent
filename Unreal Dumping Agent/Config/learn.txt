@@ -41,6 +41,11 @@ how this work||CorrM||7
 how that work||CorrM||7
 what to do||CorrM||7
 
+// QuestionType == Set
+set||CorrM||8
+put||CorrM||8
+assign||CorrM||8
+
 // QuestionType == Find
 i need to find||CorrM||101
 find||CorrM||101
@@ -62,8 +67,6 @@ take my target||CorrM||102
 lock for target||CorrM||102
 that's my process||CorrM||102
 my process||CorrM||102
-set my target||CorrM||102
-set my process||CorrM||102
 
 // QuestionType == SdkDump
 dump this process||CorrM||103

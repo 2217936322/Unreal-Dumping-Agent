@@ -11,10 +11,15 @@ namespace Unreal_Dumping_Agent.Chat
         {
             { "gname", EQuestionTask.GNames },
             { "gnames", EQuestionTask.GNames },
+            { "names", EQuestionTask.GNames },
+
             { "gobject", EQuestionTask.GObject },
             { "gobjects", EQuestionTask.GObject },
+            { "objects", EQuestionTask.GObject },
+
             { "process", EQuestionTask.Process },
             { "target", EQuestionTask.Process },
+
             { "sdk", EQuestionTask.Sdk },
             { "tool", EQuestionTask.Tool },
         };
@@ -31,6 +36,7 @@ namespace Unreal_Dumping_Agent.Chat
         Funny = 5,
         Open = 6,
         Help = 7,
+        Set = 8,
 
         Find = 101,
         LockProcess = 102,

@@ -92,7 +92,9 @@ namespace Unreal_Dumping_Agent.Json
         /// <param name="overrideOld">override old struct if found ?</param>
         public static void LoadJsonEngine(string jsonFileName, bool overrideOld = false)
         {
-            string filePath = Path.Combine(Environment.CurrentDirectory, "Config", "EngineCore", $"{jsonFileName}.json");
+            jsonFileName = jsonFileName.EndsWith(".json") ? jsonFileName : $"{jsonFileName}.json";
+
+            string filePath = Path.Combine(Program.ConfigPath, "EngineCore", jsonFileName);
             _engineJObject = JObject.Parse(File.ReadAllText(filePath));
 
             foreach (var jsonStructs in _engineJObject["structs"])

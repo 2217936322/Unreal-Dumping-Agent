@@ -21,6 +21,7 @@ namespace Unreal_Dumping_Agent.UtilsHelper
     {
         private static readonly Random _random = new Random();
 
+        public static string NLine = Environment.NewLine;
         public const string Version = "1.0.0";
         public const string Title = "Welcome Agent";
         public const string UnrealWindowClass = "UnrealWindow";
@@ -54,6 +55,17 @@ namespace Unreal_Dumping_Agent.UtilsHelper
             list[indexA] = list[indexB];
             list[indexB] = tmp;
             return list;
+        }
+        public static ProcessModule[] ToArray(this ProcessModuleCollection mList)
+        {
+            var collection = new ProcessModule[mList.Count];
+            mList.CopyTo(collection, 0);
+
+            return collection;
+        }
+        public static string[] Split(this string str, string separator)
+        {
+            return str.Split(new[] { separator }, StringSplitOptions.RemoveEmptyEntries);
         }
         #endregion
 
@@ -127,7 +139,7 @@ namespace Unreal_Dumping_Agent.UtilsHelper
 #if x64
             return true;
 #else
-            return true;
+            return false;
 #endif
         }
         public static bool IsDebug()
@@ -135,7 +147,7 @@ namespace Unreal_Dumping_Agent.UtilsHelper
 #if DEBUG
             return true;
 #else
-            return true;
+            return false;
 #endif
         }
         public static void ConsoleText(string category, string message, ConsoleColor textColor)

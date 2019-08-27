@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Unreal_Dumping_Agent.UtilsHelper;
@@ -26,6 +25,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
                 if (ReferenceEquals(null, obj)) return false;
                 if (ReferenceEquals(this, obj)) return true;
                 if (obj.GetType() != this.GetType()) return false;
+
                 return Equals((UEObject) obj);
             }
             public override int GetHashCode()
@@ -65,7 +65,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
                 if (!ObjName.Empty())
                     return Task.FromResult(ObjName);
 
-                string name = NamesStore.GetByIndex(Object.Name.Index); // TODO: Check Here !!
+                string name = NamesStore.GetByIndex(Object.Name.Index);
                 if (!name.Empty() && (Object.Name.Number > 0 && Object.Name.Index != Object.Name.Number))
                     name += "_" + Object.Name.Number;
 
@@ -163,7 +163,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine.UE4
                 return Package ?? (Package = await ObjectsStore.GetByAddress(Object.ObjAddress));
             }
 
-            // ToDo: Add Cache here to be faster
+            // ToDo: Try to add Cache here to be faster
             public async Task<bool> IsA<T>() where T : UEObject, new()
             {
                 if (!IsValid())
