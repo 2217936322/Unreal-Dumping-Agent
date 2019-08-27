@@ -1,3 +1,34 @@
-**Wh**
+**What I Can Do**
+1) Find GNames Array Static Pointer.
+2) Find GObjects Array Static Pointer.
+3) Dump SDK For UnrealEngine Games.
+4) Support UnrealEngine 4.
+5) i'm `AI`, So i can understand your words if it's about any of below.
 
-**Features**
+**How To Talk With Me**
+Most of cases you will need to select a target.
+
+__Select Target__
+```
+You can just tell me
+"find target" for automatic find good target,
+"set target 1234" OR "set target 0x1ABC" for special target id.
+```
+
+__Finder__
+```
+You can just tell me
+"find GNames/GObjects" to start finder.
+Will give posible addresss for GNames/GObjects.
+Most of cases will give u 3 address,
+first two will be a static address, 3th will be the relative address.
+You must select one of first two, 3th will not work (it's just to know this address)
+```
+
+__SDK Generator__
+```
+SDK Generator is asking me to generate sdk for UnrealEngine Game.
+You can just tell me
+"sdk dump", "sdk gen" or "sdk".
+and i will start generate sdk for you.
+```

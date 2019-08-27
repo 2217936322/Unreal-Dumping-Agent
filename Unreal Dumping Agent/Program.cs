@@ -216,7 +216,8 @@ namespace Unreal_Dumping_Agent
 
             #region Lock process, auto detect process
             if (uTask.TypeEnum() == EQuestionType.LockProcess ||
-                uTask.TypeEnum() == EQuestionType.Find && uTask.TaskEnum() == EQuestionTask.Process)
+                uTask.TypeEnum() == EQuestionType.Find && uTask.TaskEnum() == EQuestionTask.Process ||
+                uTask.TypeEnum() == EQuestionType.Set && uTask.TaskEnum() == EQuestionTask.Process)
             {
                 // Try to get process id
                 bool findProcessId = !context.Message.Content.Contains("0x")
@@ -268,7 +269,7 @@ namespace Unreal_Dumping_Agent
                 emb.WithUrl(Utils.DonateUrl);
                 emb.WithFooter(Utils.DiscordFooterText, Utils.DiscordFooterImg);
 
-                emb.AddField("Process Handle", $"0x{Utils.MemObj.ProcessHandle.ToInt32():X} | {Utils.MemObj.ProcessHandle.ToInt32()}");
+                emb.AddField("Process ID", $"0x{Utils.MemObj.TargetProcess.Id:X} | {Utils.MemObj.TargetProcess.Id}");
                 emb.AddField("Game Architecture", Utils.MemObj.Is64Bit ? "64Bit" : "32bit");
                 emb.AddField("Window Name", Utils.MemObj.TargetProcess.MainWindowTitle);
                 emb.AddField("Exe Name", Path.GetFileName(Utils.MemObj.TargetProcess.MainModule?.FileName));
@@ -385,11 +386,35 @@ namespace Unreal_Dumping_Agent
             #region Set
             else if (uTask.TypeEnum() == EQuestionType.Set)
             {
-                bool foundAddress = long.TryParse(context.Message.Content.Split("0x")[1],
-                        NumberStyles.HexNumber, new NumberFormatInfo(), out long address);
+                if (Utils.MemObj == null)
+                {
+                    if (uTask.TaskEnum() == EQuestionTask.None)
+                        await context.User.SendMessageAsync(DiscordText.GetRandomNotUnderstandString());
+                    else
+                        await context.User.SendMessageAsync($"Give me your target FIRST !!");
+                    curUser.LastOrder = UserOrder.GetProcess;
+                    return;
+                }
+
+                bool foundAddress;
+                long address;
+
+                if (context.Message.Content.Contains("0x"))
+                {
+                    foundAddress = long.TryParse(context.Message.Content.Split("0x")[1],
+                        NumberStyles.HexNumber, new NumberFormatInfo(), out address);
+                }
+                else
+                {
+                    foundAddress = false;
+                    address = 0x0;
+                }
 
                 if (!foundAddress)
+                {
                     await context.Channel.SendMessageAsync($"**What to set** !!, __I can't see any thing__.!");
+                    return;
+                }
 
                 if (uTask.TaskEnum() == EQuestionTask.GNames)
                 {
