@@ -328,8 +328,20 @@ namespace Unreal_Dumping_Agent
                 emb.WithUrl(Utils.DonateUrl);
                 emb.WithFooter(Utils.DiscordFooterText, Utils.DiscordFooterImg);
 
+                bool isGnames = uTask.TaskEnum() == EQuestionTask.GNames;
                 for (int i = 0; i < finderResult.Count; i++)
-                    emb.Description += $"{DiscordText.GetEmojiNumber(i + 1, true)}) `0x{finderResult[i].ToInt64():X}`.\n";
+                {
+                    if (isGnames)
+                    {
+                        string validStr = Utils.IsValidGNamesAddress(finderResult[i]) ? "Valid" : "Not Valid";
+                        emb.Description += $"{DiscordText.GetEmojiNumber(i + 1, true)}) `0x{finderResult[i].ToInt64():X}` ({validStr}).{Utils.NLine}";
+                    }
+                    else
+                    {
+                        string validStr = Utils.IsTUobjectArray(finderResult[i]) ? "Valid" : "Not Valid";
+                        emb.Description += $"{DiscordText.GetEmojiNumber(i + 1, true)}) `0x{finderResult[i].ToInt64():X}` ({validStr}).{Utils.NLine}";
+                    }
+                }
 
                 await lastMessage.ModifyAsync(msg =>
                 {
