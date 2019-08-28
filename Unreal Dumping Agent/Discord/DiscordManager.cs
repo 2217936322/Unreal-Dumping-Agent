@@ -15,7 +15,7 @@ namespace Unreal_Dumping_Agent.Discord
     public class DiscordManager
     {
         // ToDo: Add to settings file
-        private const string BotToken = "NjAxNjM4NjY1NTg4MDQ3OTEw.XTFNxA.nGeHiWe-ZAG89DsF98RbR-X9bKE";
+        private const string BotToken = "";
         private bool _init;
         private CommandService _commands;
 
