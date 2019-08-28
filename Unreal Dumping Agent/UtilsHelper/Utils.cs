@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using Unreal_Dumping_Agent.Chat;
@@ -450,7 +448,7 @@ namespace Unreal_Dumping_Agent.UtilsHelper
             Win32.CloseHandle(processHandle);
             return !ret;
         }
-        public static TDelegate GetProcAddress<TDelegate>(string dllName, string funcName) where TDelegate : System.Delegate
+        public static TDelegate GetProcAddress<TDelegate>(string dllName, string funcName) where TDelegate : Delegate
         {
             IntPtr funcAddress = Win32.GetProcAddress(Win32.LoadLibrary(dllName), funcName);
             return Marshal.GetDelegateForFunctionPointer<TDelegate>(funcAddress);
@@ -485,9 +483,10 @@ namespace Unreal_Dumping_Agent.UtilsHelper
         {
             windowHandle = IntPtr.Zero;
             windowTitle = string.Empty;
+            IntPtr childControl = (IntPtr)0x0;
 
             retry:
-            IntPtr childControl = Win32.FindWindowEx(new IntPtr(Win32.HwndDesktop), IntPtr.Zero, UnrealWindowClass, null);
+            childControl = Win32.FindWindowEx(new IntPtr(Win32.HwndDesktop), childControl, UnrealWindowClass, null);
             if (childControl == IntPtr.Zero)
                 return 0;
 
