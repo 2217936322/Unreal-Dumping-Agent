@@ -214,6 +214,17 @@ namespace Unreal_Dumping_Agent.Tools
             Utils.MemObj.GetModuleInfo(Generator.GameModule, out var mod);
             Generator.GameModuleBase = mod.BaseAddress;
 
+            #region Move Sdk Message
+            // Move the Sdk Dump Message, to be the last message
+            ulong oldMessage = _requestInfo.AgentMessage.Id;
+
+            // New Message
+            _requestInfo.AgentMessage = await _requestInfo.Context.Channel.SendMessageAsync("♥");
+
+            // Delete Old
+            await (await _requestInfo.Context.Channel.GetMessageAsync(oldMessage)).DeleteAsync();
+            #endregion
+
             // Init Sdk Lang
             if (!InitSdkLang())
                 return new GenRetInfo { State = GeneratorState.BadSdkLang };
@@ -247,7 +258,7 @@ namespace Unreal_Dumping_Agent.Tools
         private static List<GenericTypes.UEObject> CollectPackages()
         {
             var ret = ObjectsStore.GObjects.Objects
-                ////////////////////////////////////////////////////////////////////.AsParallel()
+                .AsParallel()
                 .Where(curObj => curObj.IsValid())
 
                 // Get Package for every object
