@@ -219,7 +219,7 @@ namespace Unreal_Dumping_Agent.Tools
             ulong oldMessage = _requestInfo.AgentMessage.Id;
 
             // New Message
-            _requestInfo.AgentMessage = await _requestInfo.Context.Channel.SendMessageAsync("♥");
+            _requestInfo.AgentMessage = await _requestInfo.Context.Channel.SendMessageAsync(embed: _requestInfo.AgentMessage.Embeds.First());
 
             // Delete Old
             await (await _requestInfo.Context.Channel.GetMessageAsync(oldMessage)).DeleteAsync();
