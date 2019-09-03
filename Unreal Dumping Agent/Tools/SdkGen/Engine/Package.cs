@@ -317,7 +317,7 @@ namespace Unreal_Dumping_Agent.Tools.SdkGen.Engine
                 return;
 
             var isClassT = obj.IsA<GenericTypes.UEClass>();
-            var isScriptStructT = obj.IsA<GenericTypes.UEClass>();
+            var isScriptStructT = obj.IsA<GenericTypes.UEScriptStruct>();
 
             if (!await isClassT && !await isScriptStructT)
                 return;
